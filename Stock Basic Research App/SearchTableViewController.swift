@@ -7,15 +7,20 @@
 //
 
 import UIKit
+import os.log
 
 class SearchTableViewController: UITableViewController {
     
-    var allStockSymbolList:NSArray = []
+    var allStockSymbolList:Array<String> = []
+    var filteredStockSymbolList:Array<String> = []
 
     override func viewDidLoad() {
         super.viewDidLoad()
         
         allStockSymbolList = getStockSymbolListFromJson()
+        allStockSymbolList = allStockSymbolList.sorted()
+        
+        filteredStockSymbolList = allStockSymbolList
 
         // Uncomment the following line to preserve selection between presentations
         // self.clearsSelectionOnViewWillAppear = false
@@ -26,15 +31,15 @@ class SearchTableViewController: UITableViewController {
     
     
     // Get all stock symbols from local json file
-    private func getStockSymbolListFromJson() -> NSArray {
-        var stockSymbolList: NSArray = []
+    private func getStockSymbolListFromJson() -> Array<String> {
+        var stockSymbolList: Array<String> = []
         
         if let path = Bundle.main.path(forResource: "stockSymbolList", ofType: "json") {
             do {
                 let fileUrl = URL(fileURLWithPath: path)
                 let data = try Data(contentsOf: fileUrl, options: .mappedIfSafe)
                 let jsonObject = try? JSONSerialization.jsonObject(with: data)
-                stockSymbolList = jsonObject as! NSArray
+                stockSymbolList = jsonObject as! Array<String>
             } catch {
                 fatalError("Error while parsing stockSymbolList json")
             }
@@ -59,13 +64,18 @@ class SearchTableViewController: UITableViewController {
     }
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return allStockSymbolList.count
+        return filteredStockSymbolList.count
     }
 
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "reuseIdentifier", for: indexPath)
+        let cellIdentifier = "SearchTableViewCell"
+        
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: cellIdentifier, for: indexPath) as? SearchTableViewCell else {
+            fatalError("The dequeued cell is not an instance of SearchTableViewCell.")
+        }
 
-        // Configure the cell...
+        let stockSymbol = filteredStockSymbolList[indexPath.row]
+        cell.symLabel.text = stockSymbol
 
         return cell
     }
@@ -105,14 +115,27 @@ class SearchTableViewController: UITableViewController {
     }
     */
 
-    /*
     // MARK: - Navigation
 
     // In a storyboard-based application, you will often want to do a little preparation before navigation
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        // Get the new view controller using segue.destination.
-        // Pass the selected object to the new view controller.
+        super.prepare(for: segue, sender: sender)
+        
+        guard let stockViewController = segue.destination as? StockViewController else {
+            fatalError("Unexpected destination: \(segue.destination)")
+        }
+        
+        guard let selectedStockCell = sender as? SearchTableViewCell else {
+            fatalError("Unexpected sender: \(sender ?? "unknown")")
+        }
+        
+        guard let indexPath = tableView.indexPath(for: selectedStockCell) else {
+            fatalError("The selected cell is not being displayed by the table")
+        }
+        
+        let selectedStock = filteredStockSymbolList[indexPath.row]
+        stockViewController.sym = selectedStock
+        stockViewController.title = selectedStock
     }
-    */
 
 }

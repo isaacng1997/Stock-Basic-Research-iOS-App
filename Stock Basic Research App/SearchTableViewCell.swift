@@ -11,7 +11,7 @@ import UIKit
 class SearchTableViewCell: UITableViewCell {
     
     // Properties
-    @IBOutlet weak var symbol: UILabel!
+    @IBOutlet weak var symLabel: UILabel!
     
     override func awakeFromNib() {
         super.awakeFromNib()

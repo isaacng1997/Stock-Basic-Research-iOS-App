@@ -10,6 +10,8 @@ import UIKit
 
 class StockViewController: UIViewController {
 
+    var sym: String = ""
+    
     override func viewDidLoad() {
         super.viewDidLoad()
 

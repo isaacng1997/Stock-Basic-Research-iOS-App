@@ -24,7 +24,7 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="bVw-uS-yE8" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="270" y="-282"/>
+            <point key="canvasLocation" x="1180" y="1144"/>
         </scene>
         <!--Home-->
         <scene sceneID="CVH-hB-BFT">
@@ -50,15 +50,10 @@
                         </connections>
                     </tableView>
                     <navigationItem key="navigationItem" title="Home" id="Eg3-xx-3HD">
-                        <barButtonItem key="rightBarButtonItem" style="plain" id="LYc-lP-N5K">
-                            <button key="customView" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" id="TTT-gT-VFg">
-                                <rect key="frame" x="302" y="7" width="92" height="30"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <state key="normal" title="Search"/>
-                                <connections>
-                                    <segue destination="z7M-yT-NUU" kind="show" id="8up-P5-HiB"/>
-                                </connections>
-                            </button>
+                        <barButtonItem key="rightBarButtonItem" style="plain" systemItem="search" id="LYc-lP-N5K">
+                            <connections>
+                                <segue destination="z7M-yT-NUU" kind="show" id="ZKU-Jm-bND"/>
+                            </connections>
                         </barButtonItem>
                     </navigationItem>
                 </tableViewController>
@@ -75,14 +70,14 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         <prototypes>
-                            <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" indentationWidth="10" id="ydK-Lz-LDd" customClass="SearchTableViewCell" customModule="Stock_Basic_Research_App" customModuleProvider="target">
+                            <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" indentationWidth="10" reuseIdentifier="SearchTableViewCell" id="ydK-Lz-LDd" customClass="SearchTableViewCell" customModule="Stock_Basic_Research_App" customModuleProvider="target">
                                 <rect key="frame" x="0.0" y="28" width="414" height="44"/>
                                 <autoresizingMask key="autoresizingMask"/>
                                 <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="ydK-Lz-LDd" id="UmU-nL-ZHs">
                                     <rect key="frame" x="0.0" y="0.0" width="414" height="43.5"/>
                                     <autoresizingMask key="autoresizingMask"/>
                                     <subviews>
-                                        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="gHX-lU-DeR">
+                                        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" text="Label" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="gHX-lU-DeR">
                                             <rect key="frame" x="20" y="11" width="374" height="22"/>
                                             <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                             <nil key="textColor"/>
@@ -90,12 +85,15 @@
                                         </label>
                                     </subviews>
                                     <constraints>
+                                        <constraint firstItem="gHX-lU-DeR" firstAttribute="leading" secondItem="UmU-nL-ZHs" secondAttribute="leading" constant="20" id="biK-dT-a6S"/>
                                         <constraint firstItem="gHX-lU-DeR" firstAttribute="centerY" secondItem="UmU-nL-ZHs" secondAttribute="centerY" id="ejn-Kr-cnw"/>
                                         <constraint firstItem="gHX-lU-DeR" firstAttribute="centerX" secondItem="UmU-nL-ZHs" secondAttribute="centerX" id="lsX-9s-vUd"/>
+                                        <constraint firstAttribute="trailing" secondItem="gHX-lU-DeR" secondAttribute="trailing" constant="20" id="tnU-gu-TEZ"/>
                                     </constraints>
                                 </tableViewCellContentView>
                                 <connections>
-                                    <outlet property="symbol" destination="gHX-lU-DeR" id="ZFd-Zl-g0I"/>
+                                    <outlet property="symLabel" destination="gHX-lU-DeR" id="A5G-fW-ftV"/>
+                                    <segue destination="4xk-WY-Prr" kind="show" id="BSu-gw-bac"/>
                                 </connections>
                             </tableViewCell>
                         </prototypes>
