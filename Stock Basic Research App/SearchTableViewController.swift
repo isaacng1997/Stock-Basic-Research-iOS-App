@@ -13,6 +13,7 @@ class SearchTableViewController: UITableViewController {
     
     var allStockSymbolList:Array<String> = []
     var filteredStockSymbolList:Array<String> = []
+    let searchController = UISearchController(searchResultsController: nil)
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -21,6 +22,13 @@ class SearchTableViewController: UITableViewController {
         allStockSymbolList = allStockSymbolList.sorted()
         
         filteredStockSymbolList = allStockSymbolList
+        
+        // Setup the Search Controller
+        searchController.searchResultsUpdater = self
+        searchController.obscuresBackgroundDuringPresentation = false
+        searchController.searchBar.placeholder = "Search Stock Symbols"
+        navigationItem.searchController = searchController
+        definesPresentationContext = true
 
         // Uncomment the following line to preserve selection between presentations
         // self.clearsSelectionOnViewWillAppear = false
@@ -53,6 +61,20 @@ class SearchTableViewController: UITableViewController {
         }
         
         return stockSymbolList
+    }
+    
+    func searchBarIsEmpty() -> Bool {
+        // Returns true if the text is empty or nil
+        return searchController.searchBar.text?.isEmpty ?? true
+    }
+    
+    func filterContentForSearchText(_ searchText: String, scope: String = "All") {
+        filteredStockSymbolList = allStockSymbolList.filter(
+            { (stockSymbol : String) -> Bool in
+                return stockSymbol.lowercased().starts(with: searchText.lowercased())
+            })
+        
+        tableView.reloadData()
     }
     
     
@@ -138,4 +160,11 @@ class SearchTableViewController: UITableViewController {
         stockViewController.title = selectedStock
     }
 
+}
+
+extension SearchTableViewController: UISearchResultsUpdating {
+    // MARK: - UISearchResultsUpdating Delegate
+    func updateSearchResults(for searchController: UISearchController) {
+        filterContentForSearchText(searchController.searchBar.text!)
+    }
 }
