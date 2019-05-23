@@ -7,9 +7,15 @@
 //
 
 import UIKit
+import CoreData
 
 class HomeTableViewController: UITableViewController {
-
+    
+    var favoriteStockSymbolList:Array<NSManagedObject> = []
+    
+    let favoriteEntity = "Favorite"
+    let appDelegate = UIApplication.shared.delegate as! AppDelegate
+    
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -19,28 +25,52 @@ class HomeTableViewController: UITableViewController {
         // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
         // self.navigationItem.rightBarButtonItem = self.editButtonItem
     }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        favoriteStockSymbolList = []
+        let context = appDelegate.persistentContainer.viewContext
+        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: favoriteEntity)
+        let sort = NSSortDescriptor(key: "symbol", ascending: true)
+        fetchRequest.sortDescriptors = [sort]
+        
+        do {
+            let favorites = try context.fetch(fetchRequest)
+            for i in 0 ..< favorites.count {
+                let row = favorites[i] as! NSManagedObject
+                favoriteStockSymbolList.append(row)
+            }
+        } catch {
+            fatalError("Error in HoneTableViewController while fetch favorites")
+        }
+        
+        tableView.reloadData()
+    }
 
     // MARK: - Table view data source
 
     override func numberOfSections(in tableView: UITableView) -> Int {
-        // #warning Incomplete implementation, return the number of sections
-        return 0
+        return 1
     }
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        // #warning Incomplete implementation, return the number of rows
-        return 0
+        return favoriteStockSymbolList.count
     }
 
-    /*
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "reuseIdentifier", for: indexPath)
-
-        // Configure the cell...
-
+        let cellIdentifier = "HomeTableViewCell"
+        
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: cellIdentifier, for: indexPath) as? HomeTableViewCell else {
+            fatalError("The dequeued cell is not an instance of HomeTableViewCell.")
+        }
+        let cellStock = favoriteStockSymbolList[indexPath.row]
+        cell.symbolLabel.text = cellStock.value(forKey: "symbol") as? String
+        cell.nameLabel.text = "TODO"
+        cell.priceLabel.text = "0"
+        
         return cell
     }
-    */
 
     /*
     // Override to support conditional editing of the table view.
@@ -77,14 +107,28 @@ class HomeTableViewController: UITableViewController {
     }
     */
 
-    /*
     // MARK: - Navigation
 
     // In a storyboard-based application, you will often want to do a little preparation before navigation
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        // Get the new view controller using segue.destination.
-        // Pass the selected object to the new view controller.
+        super.prepare(for: segue, sender: sender)
+        
+        guard let stockViewController = segue.destination as? StockViewController else {
+            // not going to stockView
+            return
+        }
+        
+        guard let selectedStockCell = sender as? HomeTableViewCell else {
+            fatalError("Unexpected sender: \(sender ?? "unknown")")
+        }
+        
+        guard let indexPath = tableView.indexPath(for: selectedStockCell) else {
+            fatalError("The selected cell is not being displayed by the table")
+        }
+        
+        let selectedStock = favoriteStockSymbolList[indexPath.row]
+        stockViewController.sym = selectedStock.value(forKey: "symbol") as! String
+        stockViewController.title = selectedStock.value(forKey: "symbol") as? String
     }
-    */
 
 }
