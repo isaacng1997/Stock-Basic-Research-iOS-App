@@ -21,8 +21,15 @@
                         <viewLayoutGuide key="safeArea" id="c5Z-xF-dWd"/>
                     </view>
                     <navigationItem key="navigationItem" title="Title" id="NBl-ge-4me">
-                        <barButtonItem key="rightBarButtonItem" style="plain" systemItem="add" id="483-od-E08"/>
+                        <barButtonItem key="rightBarButtonItem" style="plain" systemItem="add" id="aNG-lu-rQJ">
+                            <connections>
+                                <action selector="favoriteButtonTap:" destination="4xk-WY-Prr" id="qgM-Dy-Pgt"/>
+                            </connections>
+                        </barButtonItem>
                     </navigationItem>
+                    <connections>
+                        <outlet property="favoriteButton" destination="aNG-lu-rQJ" id="gME-OX-SKe"/>
+                    </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="bVw-uS-yE8" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
