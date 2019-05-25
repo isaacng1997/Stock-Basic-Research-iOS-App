@@ -31,6 +31,8 @@ let invalid_symbol_string = "<title>Symbol Lookup from Yahoo Finance</title>"
 var company_dictionary:[String: [String:String]] = [:]
 var ready:[String:Bool] = [:]
 
+var price = ""
+
 class YahooFinanceScraper {
     
     static func get(symbol: String) -> [String: String] {
@@ -39,6 +41,74 @@ class YahooFinanceScraper {
             sleep(1)
         }
         return company_dictionary[symbol]!
+    }
+    
+    static func get_newest_price(symbol:String) -> String {
+        price = ""
+        scrap_newst_price(symbol: symbol)
+        while(price == ""){
+            sleep(1)
+        }
+        return price
+    }
+    
+    static func scrap_newst_price(symbol:String) {
+        let url = URL(string: baseURL + symbol + statURL + symbol)!
+        let task = URLSession.shared.dataTask(with: url) { (data, response, error) in
+            guard let data = data else {
+                print("data was nil")
+                price = "-1"
+                return
+            }
+            guard let htmlString = String(data: data, encoding: .utf8) else {
+                print("couldn't cast data into String")
+                price = "-1"
+                return
+            }
+            
+            if htmlString.contains(invalid_symbol_string) {
+                print("Invalid Symbol/No data on Symbol")
+                price = "-1"
+                return
+            }
+            
+            let leftString = """
+            "currency":"USD","regularMarketPrice":{"raw":
+            """
+            var rightString = """
+            "},"regularMarketVolume":{"raw":
+            """
+            let leftSideRange = htmlString.range(of: leftString)
+            var rightSideRange = htmlString.range(of: rightString)
+            var lastPrice = ""
+            if leftSideRange == nil {
+                print("couldn't find left range when parsing for last price")
+                price = "-1"
+                return
+            }
+            if rightSideRange == nil {
+                print("couldn't find right range when parsing for last price")
+                price = "-1"
+                return
+            }
+            
+            var rangeOfTheData = leftSideRange!.upperBound..<rightSideRange!.lowerBound
+            lastPrice = String(htmlString[rangeOfTheData])
+            
+            rightString = """
+            ,"fmt":"
+            """
+            rightSideRange = lastPrice.range(of: rightString)
+            if rightSideRange == nil {
+                print("couldn't find right range when parsing for last price")
+                price = "-1"
+                return
+            }
+            
+            rangeOfTheData = lastPrice.startIndex..<rightSideRange!.lowerBound
+            price = String(lastPrice[rangeOfTheData])
+        }
+        task.resume()
     }
     
     

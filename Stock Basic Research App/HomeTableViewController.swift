@@ -71,7 +71,32 @@ class HomeTableViewController: UITableViewController {
         
         return cell
     }
-
+    
+    @IBAction func refreshButton(_ sender: Any) {
+        // update last price for all stocks in favorite
+        let context = appDelegate.persistentContainer.viewContext
+        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: favoriteEntity)
+        
+        do {
+            let favorites = try context.fetch(fetchRequest)
+            for i in 0 ..< favorites.count {
+                let f = favorites[i] as! NSManagedObject
+                let newestPrice = StockDataRetriever.get_newest_price(symbol: f.value(forKey: "symbol") as! String)
+                f.setValue(newestPrice, forKey: "lastPrice")
+            }
+        } catch {
+            fatalError("Error in HoneTableViewController while fetch favorites")
+        }
+        
+        do {
+            try context.save()
+        } catch let error as NSError {
+            fatalError("Could not save. \(error), \(error.userInfo)")
+        }
+        
+        tableView.reloadData()
+    }
+    
     /*
     // Override to support conditional editing of the table view.
     override func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {

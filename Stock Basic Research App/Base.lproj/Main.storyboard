@@ -103,6 +103,11 @@
                         </connections>
                     </tableView>
                     <navigationItem key="navigationItem" title="Home" id="Eg3-xx-3HD">
+                        <barButtonItem key="leftBarButtonItem" systemItem="refresh" id="mGl-dF-7W5">
+                            <connections>
+                                <action selector="refreshButton:" destination="anD-bT-3wg" id="5O6-Ir-Lqr"/>
+                            </connections>
+                        </barButtonItem>
                         <barButtonItem key="rightBarButtonItem" systemItem="search" id="LYc-lP-N5K">
                             <connections>
                                 <segue destination="z7M-yT-NUU" kind="show" id="ZKU-Jm-bND"/>

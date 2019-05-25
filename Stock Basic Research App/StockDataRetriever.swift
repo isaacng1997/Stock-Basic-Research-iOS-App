@@ -14,7 +14,7 @@ let stockInfoEntity = "StockInfo"
 class StockDataRetriever {
 
     static func get_stock_info(context: NSManagedObjectContext,
-                        symbol: String) -> NSManagedObject {
+                               symbol: String) -> NSManagedObject {
         
         var stock:NSManagedObject
         let entity = NSEntityDescription.entity(forEntityName: stockInfoEntity, in: context)!
@@ -53,5 +53,9 @@ class StockDataRetriever {
         }
         
         return stock
+    }
+    
+    static func get_newest_price(symbol: String) -> String {
+        return YahooFinanceScraper.get_newest_price(symbol: symbol)
     }
 }
