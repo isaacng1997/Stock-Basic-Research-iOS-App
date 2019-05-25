@@ -40,7 +40,7 @@ class StockDataRetriever {
             }
             
             let c = YahooFinanceScraper.get(symbol: symbol)
-            stock.setValuesForKeys(c.asDictionary)
+            stock.setValuesForKeys(c)
             
         } catch {
             fatalError("Error in StockDataRetriever: (1).")
