@@ -67,7 +67,7 @@ class HomeTableViewController: UITableViewController {
         let cellStock = favoriteStockSymbolList[indexPath.row]
         cell.symbolLabel.text = cellStock.value(forKey: "symbol") as? String
         cell.nameLabel.text = cellStock.value(forKey: "name") as? String
-        cell.priceLabel.text = String(cellStock.value(forKey: "lastPrice") as! Double)
+        cell.priceLabel.text = cellStock.value(forKey: "lastPrice") as? String
         
         return cell
     }

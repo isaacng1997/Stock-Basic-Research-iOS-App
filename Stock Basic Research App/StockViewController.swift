@@ -13,6 +13,7 @@ class StockViewController: UIViewController {
 
     var sym: String = ""
     let favoriteEntity = "Favorite"
+    let stockInfoEntity = "StockInfo"
     
     @IBOutlet weak var favoriteButton: UIBarButtonItem!
     let toggleEditSelector = #selector(favoriteButtonTap)
@@ -59,10 +60,13 @@ class StockViewController: UIViewController {
             setEditing(true, animated: true)
             
             // add to core data
+            let c = StockDataRetriever.get_stock_info(context: context,
+                                                      entity: NSEntityDescription.entity(forEntityName: stockInfoEntity, in: context)!,
+                                                      symbol: sym)
             let stock = NSManagedObject(entity: entity, insertInto: context)
             stock.setValue(sym, forKey: "symbol")
-            stock.setValue("TODO in StockViewController", forKey: "name")
-            stock.setValue(0, forKey: "lastPrice")
+            stock.setValue(c.value(forKey: "name"), forKey: "name")
+            stock.setValue(c.value(forKey: "lastPrice"), forKey: "lastPrice")
             
         case UIBarButtonItem.SystemItem.stop.rawValue:
             let addBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: toggleEditSelector)

@@ -52,7 +52,7 @@ struct Company {
     
     var beta: String
     var fiftyTwoWeekChange: String
-    var SP500fiftyTwoWeekChange: String
+    var sp500FiftyTwoWeekChange: String
     var fiftyTwoWeekHigh: String
     var fiftyTwoWeekLow: String
     var fiftyDayMovingAverage: String
@@ -84,6 +84,8 @@ struct Company {
     var sector: String
     var industry: String
     var fullTimeEmployees: String
+    
+    var lastPrice: String
 }
 
 var company_dictionary:[String:Company] = [:]
@@ -275,7 +277,6 @@ func get_basic_info(symbol: String) {
             return
         }
         
-        
         // parse for name of company
         var leftString = "Key Statistics | "
         var rightString = " Stock - Yahoo Finance"
@@ -311,6 +312,37 @@ func get_basic_info(symbol: String) {
         }
         rangeOfTheData = leftSideRange!.upperBound..<rightSideRange!.lowerBound
         let lastSplitDate = String(htmlString[rangeOfTheData])
+        
+        // parse for last price
+        leftString = """
+        "currency":"USD","regularMarketPrice":{"raw":
+        """
+        rightString = """
+        "},"regularMarketVolume":{"raw":
+        """
+        leftSideRange = htmlString.range(of: leftString)
+        rightSideRange = htmlString.range(of: rightString)
+        if leftSideRange == nil {
+            print("couldn't find left range when parsing for last price")
+            return
+        }
+        if rightSideRange == nil {
+            print("couldn't find right range when parsing for last price")
+            return
+        }
+        rangeOfTheData = leftSideRange!.upperBound..<rightSideRange!.lowerBound
+        var lastPrice = String(htmlString[rangeOfTheData])
+        
+        rightString = """
+        ,"fmt":"
+        """
+        rightSideRange = lastPrice.range(of: rightString)
+        if rightSideRange == nil {
+            print("couldn't find right range when parsing for last price")
+            return
+        }
+        rangeOfTheData = lastPrice.startIndex..<rightSideRange!.lowerBound
+        lastPrice = String(lastPrice[rangeOfTheData])
         
         let c = Company(symbol: symbol,
                         name: name,
@@ -351,7 +383,7 @@ func get_basic_info(symbol: String) {
                         
                         beta:                       scrap_from_statistics(htmlString: &htmlString, left: 284, name_of_stat: "beta"),
                         fiftyTwoWeekChange:         scrap_from_statistics(htmlString: &htmlString, left: 291, name_of_stat: "fiftyTwoWeekChange"),
-                        SP500fiftyTwoWeekChange:    scrap_from_statistics(htmlString: &htmlString, left: 298, name_of_stat: "SP500fiftyTwoWeekChange"),
+                        sp500FiftyTwoWeekChange:    scrap_from_statistics(htmlString: &htmlString, left: 298, name_of_stat: "sp500FiftyTwoWeekChange"),
                         fiftyTwoWeekHigh:           scrap_from_statistics(htmlString: &htmlString, left: 305, name_of_stat: "fiftyTwoWeekHigh"),
                         fiftyTwoWeekLow:            scrap_from_statistics(htmlString: &htmlString, left: 312, name_of_stat: "fiftyTwoWeekLow"),
                         fiftyDayMovingAverage:      scrap_from_statistics(htmlString: &htmlString, left: 319, name_of_stat: "fiftyDayMovingAverage"),
@@ -382,7 +414,9 @@ func get_basic_info(symbol: String) {
                         
                         sector: "",
                         industry: "",
-                        fullTimeEmployees: ""
+                        fullTimeEmployees: "",
+                        
+                        lastPrice: lastPrice
         )
         company_dictionary[symbol] = c
         get_profile_info(symbol: symbol)
