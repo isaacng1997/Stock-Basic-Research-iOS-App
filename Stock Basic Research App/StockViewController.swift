@@ -19,28 +19,30 @@ class StockViewController: UIViewController {
     let toggleEditSelector = #selector(favoriteButtonTap)
     let appDelegate = UIApplication.shared.delegate as! AppDelegate
     
+    var stopBarButtonItem = UIBarButtonItem()
+    var addBarButtonItem = UIBarButtonItem()
     
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        // Do any additional setup after loading the view.
-        let context = appDelegate.persistentContainer.viewContext
+        // set up add/stop buttons
+        stopBarButtonItem = UIBarButtonItem(barButtonSystemItem: .stop, target: self, action: toggleEditSelector)
+        addBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: toggleEditSelector)
         
         // change button if this stock is favorited
+        let context = appDelegate.persistentContainer.viewContext
         let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: favoriteEntity)
         fetchRequest.predicate = NSPredicate(format: "symbol = %@", sym)
         
         do {
             let test = try context.fetch(fetchRequest)
             if test.count > 0 {
-                let stopBarButtonItem = UIBarButtonItem(barButtonSystemItem: .stop, target: self, action: toggleEditSelector)
                 navigationItem.rightBarButtonItem = stopBarButtonItem
                 setEditing(true, animated: true)
             }
         } catch {
             fatalError("Error in StockViewController: Failed fetch while loading page.")
         }
-        
     }
     
     @IBAction func favoriteButtonTap(_ sender: UIBarButtonItem) {
@@ -52,16 +54,15 @@ class StockViewController: UIViewController {
         let entity = NSEntityDescription.entity(forEntityName: favoriteEntity, in: context)!
 
         // switch between add and stop button, and add/remove stock symbol from favorite accordingly
-        
         switch systemItem {
         case UIBarButtonItem.SystemItem.add.rawValue:
-            let stopBarButtonItem = UIBarButtonItem(barButtonSystemItem: .stop, target: self, action: toggleEditSelector)
+            // switch to stop button
+            
             navigationItem.rightBarButtonItem = stopBarButtonItem
             setEditing(true, animated: true)
             
             // add to core data
             let c = StockDataRetriever.get_stock_info(context: context,
-                                                      entity: NSEntityDescription.entity(forEntityName: stockInfoEntity, in: context)!,
                                                       symbol: sym)
             let stock = NSManagedObject(entity: entity, insertInto: context)
             stock.setValue(sym, forKey: "symbol")
@@ -69,7 +70,8 @@ class StockViewController: UIViewController {
             stock.setValue(c.value(forKey: "lastPrice"), forKey: "lastPrice")
             
         case UIBarButtonItem.SystemItem.stop.rawValue:
-            let addBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: toggleEditSelector)
+            // switch to add button
+            
             navigationItem.rightBarButtonItem = addBarButtonItem
             setEditing(false, animated: true)
             

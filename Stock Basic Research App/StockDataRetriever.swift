@@ -14,9 +14,10 @@ let stockInfoEntity = "StockInfo"
 class StockDataRetriever {
 
     static func get_stock_info(context: NSManagedObjectContext,
-                        entity: NSEntityDescription,
                         symbol: String) -> NSManagedObject {
+        
         var stock:NSManagedObject
+        let entity = NSEntityDescription.entity(forEntityName: stockInfoEntity, in: context)!
         let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: stockInfoEntity)
         fetchRequest.predicate = NSPredicate(format: "symbol = %@", symbol)
         
