@@ -55,16 +55,16 @@
                                             <rect key="frame" x="20" y="6" width="374.5" height="37.5"/>
                                             <subviews>
                                                 <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" distribution="fillProportionally" spacing="5" translatesAutoresizingMaskIntoConstraints="NO" id="cUz-6g-j0b">
-                                                    <rect key="frame" x="0.0" y="0.0" width="223" height="37.5"/>
+                                                    <rect key="frame" x="0.0" y="0.0" width="294.5" height="37.5"/>
                                                     <subviews>
                                                         <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Symbol" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="1Jy-go-ZVE">
-                                                            <rect key="frame" x="0.0" y="0.0" width="223" height="20.5"/>
+                                                            <rect key="frame" x="0.0" y="0.0" width="294.5" height="20.5"/>
                                                             <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                             <nil key="textColor"/>
                                                             <nil key="highlightedColor"/>
                                                         </label>
                                                         <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" verticalCompressionResistancePriority="749" text="Name" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="jVe-AR-Rn9">
-                                                            <rect key="frame" x="0.0" y="25.5" width="223" height="12"/>
+                                                            <rect key="frame" x="0.0" y="25.5" width="294.5" height="12"/>
                                                             <fontDescription key="fontDescription" type="system" pointSize="10"/>
                                                             <color key="textColor" white="0.33333333329999998" alpha="1" colorSpace="calibratedWhite"/>
                                                             <nil key="highlightedColor"/>
@@ -72,9 +72,9 @@
                                                     </subviews>
                                                 </stackView>
                                                 <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Price" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" preferredMaxLayoutWidth="80" translatesAutoresizingMaskIntoConstraints="NO" id="lrf-dz-H6Q">
-                                                    <rect key="frame" x="223" y="8.5" width="151.5" height="20.5"/>
+                                                    <rect key="frame" x="294.5" y="8.5" width="80" height="20.5"/>
                                                     <constraints>
-                                                        <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="80" id="Hvc-vp-56p"/>
+                                                        <constraint firstAttribute="width" constant="80" id="TiS-S4-WHe"/>
                                                     </constraints>
                                                     <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                     <nil key="textColor"/>

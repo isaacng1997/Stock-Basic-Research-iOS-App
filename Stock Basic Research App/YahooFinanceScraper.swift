@@ -268,6 +268,7 @@ class YahooFinanceScraper {
                 rangeOfTheData = leftSideRange!.upperBound..<rightSideRange!.lowerBound
                 name = String(htmlString[rangeOfTheData])
             }
+            name = name.replacingOccurrences(of: "&amp;", with: "&")
             
             // parse for last split date
             error = false
