@@ -47,7 +47,6 @@ class StockViewController: UIViewController {
         }
         
         stockInfo = StockDataRetriever.get_stock_info(context: context, symbol: sym)
-        print(stockInfo)
     }
     
     @IBAction func favoriteButtonTap(_ sender: UIBarButtonItem) {

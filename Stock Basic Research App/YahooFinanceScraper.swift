@@ -111,6 +111,26 @@ class YahooFinanceScraper {
         task.resume()
     }
     
+    static func shorten_stat_htmlString(htmlString: String) -> String {
+        let leftString = """
+        <td class="Fz(s) Fw(500) Ta(end)" data-reactid="19">
+        """
+        let rightString = """
+        </td></tr></tbody></table></div></div></div><div class="Cl(b)" data-reactid="484">
+        """
+        
+        guard let leftSideRange = htmlString.range(of: leftString) else {
+            print("couldn't find left range when parsing for name of company")
+            return htmlString
+        }
+        guard let rightSideRange = htmlString.range(of: rightString) else {
+            print("couldn't find right range when parsing for name of company")
+            return htmlString
+        }
+        let rangeOfTheData = leftSideRange.lowerBound ..< rightSideRange.upperBound
+        return String(htmlString[rangeOfTheData])
+    }
+    
     
     // Build URL to get historical data of a given stock
     // symbol: String of the symbol. eg) AAPL
@@ -260,6 +280,8 @@ class YahooFinanceScraper {
                 industry = String(htmlString[rangeOfTheData])
             }
             
+            industry = industry.replacingOccurrences(of: "&amp;", with: "&")
+            
             // parse for fullTimeEmployees
             error = false
             leftString = """
@@ -340,29 +362,6 @@ class YahooFinanceScraper {
             }
             name = name.replacingOccurrences(of: "&amp;", with: "&")
             
-            // parse for last split date
-            error = false
-            leftString = """
-            <td class="Fz(s) Fw(500) Ta(end)" data-reactid="483">
-            """
-            rightString = """
-            </td></tr></tbody></table></div></div></div><div class="Cl(b)" data-reactid="484">
-            """
-            leftSideRange = htmlString.range(of: leftString)
-            rightSideRange = htmlString.range(of: rightString)
-            var lastSplitDate = ""
-            if leftSideRange == nil {
-                print("couldn't find left range when parsing for last split date")
-                error = true
-            }
-            if rightSideRange == nil {
-                print("couldn't find right range when parsing for last split date")
-                error = true
-            }
-            if !error {
-                rangeOfTheData = leftSideRange!.upperBound..<rightSideRange!.lowerBound
-                lastSplitDate = String(htmlString[rangeOfTheData])
-            }
             
             // parse for last price
             error = false
@@ -403,75 +402,101 @@ class YahooFinanceScraper {
                 }
             }
             
+            htmlString = shorten_stat_htmlString(htmlString: htmlString)
+            
+            // parse for last split date
+            error = false
+            leftString = """
+            <td class="Fz(s) Fw(500) Ta(end)" data-reactid="483">
+            """
+            rightString = """
+            </td></tr></tbody></table></div></div></div><div class="Cl(b)" data-reactid="484">
+            """
+            leftSideRange = htmlString.range(of: leftString)
+            rightSideRange = htmlString.range(of: rightString)
+            var lastSplitDate = ""
+            if leftSideRange == nil {
+                print("couldn't find left range when parsing for last split date")
+                error = true
+            }
+            if rightSideRange == nil {
+                print("couldn't find right range when parsing for last split date")
+                error = true
+            }
+            if !error {
+                rangeOfTheData = leftSideRange!.upperBound..<rightSideRange!.lowerBound
+                lastSplitDate = String(htmlString[rangeOfTheData])
+            }
+            
             let c = ["symbol": symbol,
-                    "name":                   name,
-                    "marketCap":              self.scrap_from_statistics(htmlString: &htmlString, left: 19, name_of_stat: "marketCap"),
-                    "enterpriseValue":        self.scrap_from_statistics(htmlString: &htmlString, left: 26, name_of_stat: "enterpriseValue"),
-                    "trailingPE":             self.scrap_from_statistics(htmlString: &htmlString, left: 33, name_of_stat: "trailingPE"),
-                    "forwardPE":              self.scrap_from_statistics(htmlString: &htmlString, left: 40, name_of_stat: "forwardPE"),
-                    "pegRatio":               self.scrap_from_statistics(htmlString: &htmlString, left: 47, name_of_stat: "pegRatio"),
-                    "priceSale":              self.scrap_from_statistics(htmlString: &htmlString, left: 54, name_of_stat: "priceSale"),
-                    "priceBook":              self.scrap_from_statistics(htmlString: &htmlString, left: 61, name_of_stat: "priceBook"),
-                    "enterpriseValueRevenue": self.scrap_from_statistics(htmlString: &htmlString, left: 68, name_of_stat: "enterpriseValueRevenue"),
-                    "enterpriseValueEBITDA":  self.scrap_from_statistics(htmlString: &htmlString, left: 75, name_of_stat: "enterpriseValueEBITDA", end_of_div: true),
-                    
-                    "profitMargin":       self.scrap_from_statistics(htmlString: &htmlString, left: 112, name_of_stat: "profitMargin"),
-                    "operativeMargin":    self.scrap_from_statistics(htmlString: &htmlString, left: 119, name_of_stat: "operativeMargin", end_of_table: true),
-                    
-                    "returnOnAssets": self.scrap_from_statistics(htmlString: &htmlString, left: 131, name_of_stat: "returnOnAssets"),
-                    "returnOnEquity": self.scrap_from_statistics(htmlString: &htmlString, left: 138, name_of_stat: "returnOnEquity", end_of_table: true),
-                    
-                    "revenue":                self.scrap_from_statistics(htmlString: &htmlString, left: 150, name_of_stat: "revenue"),
-                    "revenuePerShare":        self.scrap_from_statistics(htmlString: &htmlString, left: 157, name_of_stat: "revenuePerShare"),
-                    "quarterlyRevenueGrowth": self.scrap_from_statistics(htmlString: &htmlString, left: 164, name_of_stat: "quarterlyRevenueGrowth"),
-                    "grossProfit":            self.scrap_from_statistics(htmlString: &htmlString, left: 171, name_of_stat: "grossProfit"),
-                    "ebitda":                 self.scrap_from_statistics(htmlString: &htmlString, left: 178, name_of_stat: "ebitda"),
-                    "netIncomeAviToCommon":   self.scrap_from_statistics(htmlString: &htmlString, left: 185, name_of_stat: "netIncomeAviToCommon"),
-                    "dilutedEps":             self.scrap_from_statistics(htmlString: &htmlString, left: 192, name_of_stat: "dilutedEps"),
-                    "quarterlyEarningGrowth": self.scrap_from_statistics(htmlString: &htmlString, left: 199, name_of_stat: "quarterlyEarningGrowth", end_of_table: true),
-                    
-                    "totalCash":          self.scrap_from_statistics(htmlString: &htmlString, left: 211, name_of_stat: "totalCash"),
-                    "totalCashPerShare":  self.scrap_from_statistics(htmlString: &htmlString, left: 218, name_of_stat: "totalCashPerShare"),
-                    "totalDebt":          self.scrap_from_statistics(htmlString: &htmlString, left: 225, name_of_stat: "totalDebt"),
-                    "totalDebtEquity":    self.scrap_from_statistics(htmlString: &htmlString, left: 232, name_of_stat: "totalDebtEquity"),
-                    "currentRatio":       self.scrap_from_statistics(htmlString: &htmlString, left: 239, name_of_stat: "currentRatio"),
-                    "bookValuePerShare":  self.scrap_from_statistics(htmlString: &htmlString, left: 246, name_of_stat: "bookValuePerShare", end_of_table: true),
-                    
-                    "operatingCashFlow":      self.scrap_from_statistics(htmlString: &htmlString, left: 258, name_of_stat: "operatingCashFlow"),
-                    "leveredFreeCashFlow":    self.scrap_from_statistics(htmlString: &htmlString, left: 265, name_of_stat: "operatingCashFlow", end_of_div: true),
-                    
-                    "beta":                       self.scrap_from_statistics(htmlString: &htmlString, left: 284, name_of_stat: "beta"),
-                    "fiftyTwoWeekChange":         self.scrap_from_statistics(htmlString: &htmlString, left: 291, name_of_stat: "fiftyTwoWeekChange"),
-                    "sp500FiftyTwoWeekChange":    self.scrap_from_statistics(htmlString: &htmlString, left: 298, name_of_stat: "sp500FiftyTwoWeekChange"),
-                    "fiftyTwoWeekHigh":           self.scrap_from_statistics(htmlString: &htmlString, left: 305, name_of_stat: "fiftyTwoWeekHigh"),
-                    "fiftyTwoWeekLow":            self.scrap_from_statistics(htmlString: &htmlString, left: 312, name_of_stat: "fiftyTwoWeekLow"),
-                    "fiftyDayMovingAverage":      self.scrap_from_statistics(htmlString: &htmlString, left: 319, name_of_stat: "fiftyDayMovingAverage"),
-                    "twoHundredDayMovingAverage": self.scrap_from_statistics(htmlString: &htmlString, left: 326, name_of_stat: "twoHundredDayMovingAverage", end_of_table: true),
-                    
-                    "avgVolthreeMonth":                   self.scrap_from_statistics(htmlString: &htmlString, left: 338, name_of_stat: "avgVolthreeMonth"),
-                    "avgBoltenDay":                       self.scrap_from_statistics(htmlString: &htmlString, left: 345, name_of_stat: "avgBoltenDay"),
-                    "sharesOutstanding":                  self.scrap_from_statistics(htmlString: &htmlString, left: 352, name_of_stat: "sharesOutstanding"),
-                    "float":                              self.scrap_from_statistics(htmlString: &htmlString, left: 359, name_of_stat: "float"),
-                    "percentHeldByInsiders":              self.scrap_from_statistics(htmlString: &htmlString, left: 366, name_of_stat: "percentHeldByInsiders"),
-                    "percentHeldByInstitutions":          self.scrap_from_statistics(htmlString: &htmlString, left: 373, name_of_stat: "percentHeldByInstitutions"),
-                    "sharesShort":                        self.scrap_from_statistics(htmlString: &htmlString, left: 380, name_of_stat: "sharesShort"),
-                    "shortRatio":                         self.scrap_from_statistics(htmlString: &htmlString, left: 387, name_of_stat: "shortRatio"),
-                    "shortPercentOfFloat":                self.scrap_from_statistics(htmlString: &htmlString, left: 394, name_of_stat: "shortPercentOfFloat"),
-                    "shortPercentOfSharesOutstanding":    self.scrap_from_statistics(htmlString: &htmlString, left: 401, name_of_stat: "shortPercentOfSharesOutstanding"),
-                    "sharesShortPriorMonth":              self.scrap_from_statistics(htmlString: &htmlString, left: 408, name_of_stat: "sharesShortPriorMonth", end_of_table: true),
-                    
-                    "forwardAnnualDividendRate":      self.scrap_from_statistics(htmlString: &htmlString, left: 420, name_of_stat: "forwardAnnualDividendRate"),
-                    "forwardAnnualDividendYield":     self.scrap_from_statistics(htmlString: &htmlString, left: 427, name_of_stat: "forwardAnnualDividendYield"),
-                    "trailingAnnualDividendRate":     self.scrap_from_statistics(htmlString: &htmlString, left: 434, name_of_stat: "trailingAnnualDividendRate"),
-                    "trailingAnnualDividendYield":    self.scrap_from_statistics(htmlString: &htmlString, left: 441, name_of_stat: "trailingAnnualDividendYield"),
-                    "fiveYearAverageDividentYield":   self.scrap_from_statistics(htmlString: &htmlString, left: 448, name_of_stat: "fiveYearAverageDividentYield"),
-                    "payoutRatio":                    self.scrap_from_statistics(htmlString: &htmlString, left: 455, name_of_stat: "payoutRatio"),
-                    "dividendDate":                   self.scrap_from_statistics(htmlString: &htmlString, left: 462, name_of_stat: "dividendDate"),
-                    "exDividendDate":                 self.scrap_from_statistics(htmlString: &htmlString, left: 469, name_of_stat: "exDividendDate"),
-                    "lastSplitFactor":                self.scrap_from_statistics(htmlString: &htmlString, left: 476, name_of_stat: "lastSplitFactor"),
-                    "lastSplitDate":                  lastSplitDate,
-                    
-                    "lastPrice": lastPrice]
+                     "name":                   name,
+                     "marketCap":              self.scrap_from_statistics(htmlString: &htmlString, left: 19, name_of_stat: "marketCap"),
+                     "enterpriseValue":        self.scrap_from_statistics(htmlString: &htmlString, left: 26, name_of_stat: "enterpriseValue"),
+                     "trailingPE":             self.scrap_from_statistics(htmlString: &htmlString, left: 33, name_of_stat: "trailingPE"),
+                     "forwardPE":              self.scrap_from_statistics(htmlString: &htmlString, left: 40, name_of_stat: "forwardPE"),
+                     "pegRatio":               self.scrap_from_statistics(htmlString: &htmlString, left: 47, name_of_stat: "pegRatio"),
+                     "priceSale":              self.scrap_from_statistics(htmlString: &htmlString, left: 54, name_of_stat: "priceSale"),
+                     "priceBook":              self.scrap_from_statistics(htmlString: &htmlString, left: 61, name_of_stat: "priceBook"),
+                     "enterpriseValueRevenue": self.scrap_from_statistics(htmlString: &htmlString, left: 68, name_of_stat: "enterpriseValueRevenue"),
+                     "enterpriseValueEBITDA":  self.scrap_from_statistics(htmlString: &htmlString, left: 75, name_of_stat: "enterpriseValueEBITDA", end_of_div: true),
+                     
+                     "profitMargin":       self.scrap_from_statistics(htmlString: &htmlString, left: 112, name_of_stat: "profitMargin"),
+                     "operativeMargin":    self.scrap_from_statistics(htmlString: &htmlString, left: 119, name_of_stat: "operativeMargin", end_of_table: true),
+                     
+                     "returnOnAssets": self.scrap_from_statistics(htmlString: &htmlString, left: 131, name_of_stat: "returnOnAssets"),
+                     "returnOnEquity": self.scrap_from_statistics(htmlString: &htmlString, left: 138, name_of_stat: "returnOnEquity", end_of_table: true),
+                     
+                     "revenue":                self.scrap_from_statistics(htmlString: &htmlString, left: 150, name_of_stat: "revenue"),
+                     "revenuePerShare":        self.scrap_from_statistics(htmlString: &htmlString, left: 157, name_of_stat: "revenuePerShare"),
+                     "quarterlyRevenueGrowth": self.scrap_from_statistics(htmlString: &htmlString, left: 164, name_of_stat: "quarterlyRevenueGrowth"),
+                     "grossProfit":            self.scrap_from_statistics(htmlString: &htmlString, left: 171, name_of_stat: "grossProfit"),
+                     "ebitda":                 self.scrap_from_statistics(htmlString: &htmlString, left: 178, name_of_stat: "ebitda"),
+                     "netIncomeAviToCommon":   self.scrap_from_statistics(htmlString: &htmlString, left: 185, name_of_stat: "netIncomeAviToCommon"),
+                     "dilutedEps":             self.scrap_from_statistics(htmlString: &htmlString, left: 192, name_of_stat: "dilutedEps"),
+                     "quarterlyEarningGrowth": self.scrap_from_statistics(htmlString: &htmlString, left: 199, name_of_stat: "quarterlyEarningGrowth", end_of_table: true),
+                     
+                     "totalCash":          self.scrap_from_statistics(htmlString: &htmlString, left: 211, name_of_stat: "totalCash"),
+                     "totalCashPerShare":  self.scrap_from_statistics(htmlString: &htmlString, left: 218, name_of_stat: "totalCashPerShare"),
+                     "totalDebt":          self.scrap_from_statistics(htmlString: &htmlString, left: 225, name_of_stat: "totalDebt"),
+                     "totalDebtEquity":    self.scrap_from_statistics(htmlString: &htmlString, left: 232, name_of_stat: "totalDebtEquity"),
+                     "currentRatio":       self.scrap_from_statistics(htmlString: &htmlString, left: 239, name_of_stat: "currentRatio"),
+                     "bookValuePerShare":  self.scrap_from_statistics(htmlString: &htmlString, left: 246, name_of_stat: "bookValuePerShare", end_of_table: true),
+                     
+                     "operatingCashFlow":      self.scrap_from_statistics(htmlString: &htmlString, left: 258, name_of_stat: "operatingCashFlow"),
+                     "leveredFreeCashFlow":    self.scrap_from_statistics(htmlString: &htmlString, left: 265, name_of_stat: "operatingCashFlow", end_of_div: true),
+                     
+                     "beta":                       self.scrap_from_statistics(htmlString: &htmlString, left: 284, name_of_stat: "beta"),
+                     "fiftyTwoWeekChange":         self.scrap_from_statistics(htmlString: &htmlString, left: 291, name_of_stat: "fiftyTwoWeekChange"),
+                     "sp500FiftyTwoWeekChange":    self.scrap_from_statistics(htmlString: &htmlString, left: 298, name_of_stat: "sp500FiftyTwoWeekChange"),
+                     "fiftyTwoWeekHigh":           self.scrap_from_statistics(htmlString: &htmlString, left: 305, name_of_stat: "fiftyTwoWeekHigh"),
+                     "fiftyTwoWeekLow":            self.scrap_from_statistics(htmlString: &htmlString, left: 312, name_of_stat: "fiftyTwoWeekLow"),
+                     "fiftyDayMovingAverage":      self.scrap_from_statistics(htmlString: &htmlString, left: 319, name_of_stat: "fiftyDayMovingAverage"),
+                     "twoHundredDayMovingAverage": self.scrap_from_statistics(htmlString: &htmlString, left: 326, name_of_stat: "twoHundredDayMovingAverage", end_of_table: true),
+                     
+                     "avgVolthreeMonth":                   self.scrap_from_statistics(htmlString: &htmlString, left: 338, name_of_stat: "avgVolthreeMonth"),
+                     "avgBoltenDay":                       self.scrap_from_statistics(htmlString: &htmlString, left: 345, name_of_stat: "avgBoltenDay"),
+                     "sharesOutstanding":                  self.scrap_from_statistics(htmlString: &htmlString, left: 352, name_of_stat: "sharesOutstanding"),
+                     "float":                              self.scrap_from_statistics(htmlString: &htmlString, left: 359, name_of_stat: "float"),
+                     "percentHeldByInsiders":              self.scrap_from_statistics(htmlString: &htmlString, left: 366, name_of_stat: "percentHeldByInsiders"),
+                     "percentHeldByInstitutions":          self.scrap_from_statistics(htmlString: &htmlString, left: 373, name_of_stat: "percentHeldByInstitutions"),
+                     "sharesShort":                        self.scrap_from_statistics(htmlString: &htmlString, left: 380, name_of_stat: "sharesShort"),
+                     "shortRatio":                         self.scrap_from_statistics(htmlString: &htmlString, left: 387, name_of_stat: "shortRatio"),
+                     "shortPercentOfFloat":                self.scrap_from_statistics(htmlString: &htmlString, left: 394, name_of_stat: "shortPercentOfFloat"),
+                     "shortPercentOfSharesOutstanding":    self.scrap_from_statistics(htmlString: &htmlString, left: 401, name_of_stat: "shortPercentOfSharesOutstanding"),
+                     "sharesShortPriorMonth":              self.scrap_from_statistics(htmlString: &htmlString, left: 408, name_of_stat: "sharesShortPriorMonth", end_of_table: true),
+                     
+                     "forwardAnnualDividendRate":      self.scrap_from_statistics(htmlString: &htmlString, left: 420, name_of_stat: "forwardAnnualDividendRate"),
+                     "forwardAnnualDividendYield":     self.scrap_from_statistics(htmlString: &htmlString, left: 427, name_of_stat: "forwardAnnualDividendYield"),
+                     "trailingAnnualDividendRate":     self.scrap_from_statistics(htmlString: &htmlString, left: 434, name_of_stat: "trailingAnnualDividendRate"),
+                     "trailingAnnualDividendYield":    self.scrap_from_statistics(htmlString: &htmlString, left: 441, name_of_stat: "trailingAnnualDividendYield"),
+                     "fiveYearAverageDividentYield":   self.scrap_from_statistics(htmlString: &htmlString, left: 448, name_of_stat: "fiveYearAverageDividentYield"),
+                     "payoutRatio":                    self.scrap_from_statistics(htmlString: &htmlString, left: 455, name_of_stat: "payoutRatio"),
+                     "dividendDate":                   self.scrap_from_statistics(htmlString: &htmlString, left: 462, name_of_stat: "dividendDate"),
+                     "exDividendDate":                 self.scrap_from_statistics(htmlString: &htmlString, left: 469, name_of_stat: "exDividendDate"),
+                     "lastSplitFactor":                self.scrap_from_statistics(htmlString: &htmlString, left: 476, name_of_stat: "lastSplitFactor"),
+                     "lastSplitDate":                  lastSplitDate,
+                     
+                     "lastPrice": lastPrice]
             
             company_dictionary[symbol] = c
             get_profile_info(symbol: symbol)
