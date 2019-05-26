@@ -73,27 +73,10 @@ class HomeTableViewController: UITableViewController {
     }
     
     @IBAction func refreshButton(_ sender: Any) {
-        // update last price for all stocks in favorite
-        let context = appDelegate.persistentContainer.viewContext
-        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: favoriteEntity)
-        
-        do {
-            let favorites = try context.fetch(fetchRequest)
-            for i in 0 ..< favorites.count {
-                let f = favorites[i] as! NSManagedObject
-                let newestPrice = StockDataRetriever.get_newest_price(symbol: f.value(forKey: "symbol") as! String)
-                f.setValue(newestPrice, forKey: "lastPrice")
-            }
-        } catch {
-            fatalError("Error in HoneTableViewController while fetch favorites")
+        for i in 0..<favoriteStockSymbolList.count {
+            let lastPrice = StockDataRetriever.get_newest_price(symbol: favoriteStockSymbolList[i].value(forKey: "symbol") as! String)
+            favoriteStockSymbolList[i].setValue(lastPrice, forKey: "lastPrice")
         }
-        
-        do {
-            try context.save()
-        } catch let error as NSError {
-            fatalError("Could not save. \(error), \(error.userInfo)")
-        }
-        
         tableView.reloadData()
     }
     

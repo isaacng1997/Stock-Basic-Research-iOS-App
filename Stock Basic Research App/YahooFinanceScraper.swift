@@ -47,7 +47,7 @@ class YahooFinanceScraper {
         price = ""
         scrap_newst_price(symbol: symbol)
         while(price == ""){
-            sleep(1)
+            //sleep(1)
         }
         return price
     }
