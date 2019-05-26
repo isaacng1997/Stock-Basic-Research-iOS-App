@@ -49,7 +49,6 @@ class StockViewController: UIViewController {
             let retrieved = StockDataRetriever.get_stock_info(context: context, symbol: self!.sym)
             DispatchQueue.main.async {
                 self?.stockInfo = retrieved
-                print(self?.stockInfo)
             }
         }
     }

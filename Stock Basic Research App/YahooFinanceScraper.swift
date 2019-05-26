@@ -34,7 +34,6 @@ class YahooFinanceScraper {
     func get_all_info(symbol: String) -> [String: String] {
         get_all_info_result = [:]
         let semaphore = DispatchSemaphore(value: 0)
-        print("in get all info")
         
         get_info_from_stat(symbol: symbol, semaphore: semaphore)
         semaphore.wait()
