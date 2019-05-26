@@ -10,6 +10,7 @@ import Foundation
 import CoreData
 
 let stockInfoEntity = "StockInfo"
+let timeBetweenDetailUpdates = 86400
 
 class StockDataRetriever {
 
@@ -39,8 +40,19 @@ class StockDataRetriever {
                 stock = NSManagedObject(entity: entity, insertInto: context)
             }
             
-            let c = YahooFinanceScraper.get(symbol: symbol)
-            stock.setValuesForKeys(c)
+            let lastUpdate = stock.value(forKey: "lastUpdate")
+            
+            if lastUpdate == nil {
+                let c = YahooFinanceScraper.get(symbol: symbol)
+                stock.setValuesForKeys(c)
+                stock.setValue(Date(), forKey: "lastUpdate")
+            } else if (Int(Date().timeIntervalSince(lastUpdate as! Date)) >= timeBetweenDetailUpdates) {
+                let c = YahooFinanceScraper.get(symbol: symbol)
+                stock.setValuesForKeys(c)
+                stock.setValue(Date(), forKey: "lastUpdate")
+            } else {
+                stock.setValue(YahooFinanceScraper.get_newest_price(symbol: symbol), forKey: "lastPrice")
+            }
             
         } catch {
             fatalError("Error in StockDataRetriever: (1).")

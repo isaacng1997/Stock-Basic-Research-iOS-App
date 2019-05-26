@@ -36,7 +36,7 @@ var price = ""
 class YahooFinanceScraper {
     
     static func get(symbol: String) -> [String: String] {
-        get_basic_info(symbol: symbol)
+        get_detail_info(symbol: symbol)
         while(ready[symbol]! == false) {
             sleep(1)
         }
@@ -297,7 +297,7 @@ class YahooFinanceScraper {
     }
     
     
-    static func get_basic_info(symbol: String) {
+    static func get_detail_info(symbol: String) {
         ready[symbol] = false
         let url = URL(string: baseURL + symbol + statURL + symbol)!
         let task = URLSession.shared.dataTask(with: url) { (data, response, error) in

@@ -33,6 +33,7 @@
         <attribute name="lastPrice" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="lastSplitDate" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="lastSplitFactor" optional="YES" attributeType="String" syncable="YES"/>
+        <attribute name="lastUpdate" optional="YES" attributeType="Date" usesScalarValueType="NO" syncable="YES"/>
         <attribute name="leveredFreeCashFlow" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="marketCap" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="name" optional="YES" attributeType="String" syncable="YES"/>
@@ -72,6 +73,6 @@
     </entity>
     <elements>
         <element name="Favorite" positionX="-63" positionY="-18" width="128" height="90"/>
-        <element name="StockInfo" positionX="-63" positionY="9" width="128" height="990"/>
+        <element name="StockInfo" positionX="-63" positionY="9" width="128" height="1005"/>
     </elements>
 </model>

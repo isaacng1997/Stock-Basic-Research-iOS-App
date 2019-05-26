@@ -22,6 +22,8 @@ class StockViewController: UIViewController {
     var stopBarButtonItem = UIBarButtonItem()
     var addBarButtonItem = UIBarButtonItem()
     
+    var stockInfo:NSManagedObject = NSManagedObject()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -43,6 +45,9 @@ class StockViewController: UIViewController {
         } catch {
             fatalError("Error in StockViewController: Failed fetch while loading page.")
         }
+        
+        stockInfo = StockDataRetriever.get_stock_info(context: context, symbol: sym)
+        print(stockInfo)
     }
     
     @IBAction func favoriteButtonTap(_ sender: UIBarButtonItem) {
