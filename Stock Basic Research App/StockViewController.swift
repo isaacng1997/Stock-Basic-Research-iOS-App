@@ -11,7 +11,9 @@ import CoreData
 
 class StockViewController: UIViewController {
 
-    var sym: String = ""
+    var sym = ""
+    var name = ""
+    var lastPrice = ""
     let favoriteEntity = "Favorite"
     let stockInfoEntity = "StockInfo"
     
@@ -22,10 +24,19 @@ class StockViewController: UIViewController {
     var stopBarButtonItem = UIBarButtonItem()
     var addBarButtonItem = UIBarButtonItem()
     
+    @IBOutlet weak var symbolLabel: UILabel!
+    @IBOutlet weak var nameLabel: UILabel!
+    @IBOutlet weak var priceLabel: UILabel!
+    
+    
     var stockInfo:NSManagedObject = NSManagedObject()
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        symbolLabel.text = sym
+        nameLabel.text = name
+        priceLabel.text = lastPrice
 
         // set up add/stop buttons
         stopBarButtonItem = UIBarButtonItem(barButtonSystemItem: .stop, target: self, action: toggleEditSelector)
@@ -49,6 +60,8 @@ class StockViewController: UIViewController {
             let retrieved = StockDataRetriever.get_stock_info(context: context, symbol: self!.sym)
             DispatchQueue.main.async {
                 self?.stockInfo = retrieved
+                self?.nameLabel.text = self?.stockInfo.value(forKey: "name") as! String?
+                self?.priceLabel.text = self?.stockInfo.value(forKey: "lastPrice") as! String?
             }
         }
     }

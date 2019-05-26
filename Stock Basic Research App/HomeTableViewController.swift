@@ -158,6 +158,8 @@ class HomeTableViewController: UITableViewController {
         let selectedStock = favoriteStockSymbolList[indexPath.row]
         stockViewController.sym = selectedStock.value(forKey: "symbol") as! String
         stockViewController.title = selectedStock.value(forKey: "symbol") as? String
+        stockViewController.name = selectedStock.value(forKey: "name") as! String
+        stockViewController.lastPrice = selectedStock.value(forKey: "lastPrice") as! String
     }
 
 }
