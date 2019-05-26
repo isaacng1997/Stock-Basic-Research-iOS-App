@@ -27,6 +27,7 @@ let three_months_in_sec = TimeInterval(93 * 86400)
 let one_week_in_sec = TimeInterval(7 * 86400)
 
 let invalid_symbol_string = "<title>Symbol Lookup from Yahoo Finance</title>"
+let invalid_symbol_string_2 = "Requested symbol wasn&#x27;t found"
 
 class YahooFinanceScraper {
     private var get_all_info_result:[String:String] = [:]
@@ -58,7 +59,7 @@ class YahooFinanceScraper {
                 return
             }
             
-            if htmlString.contains(invalid_symbol_string) {
+            if htmlString.contains(invalid_symbol_string) || htmlString.contains(invalid_symbol_string_2) {
                 print("Invalid Symbol/No data on Symbol")
                 return
             }
@@ -101,7 +102,7 @@ class YahooFinanceScraper {
         return result
     }
     
-    private func shorten_stat_htmlString(htmlString: String) -> String {
+    private func shorten_stat_htmlString(htmlString: inout String) -> String {
         let leftString = """
         <td class="Fz(s) Fw(500) Ta(end)" data-reactid="19">
         """
@@ -224,7 +225,7 @@ class YahooFinanceScraper {
                 return
             }
             
-            if htmlString.contains(invalid_symbol_string) {
+            if htmlString.contains(invalid_symbol_string) || htmlString.contains(invalid_symbol_string_2) {
                 print("Invalid Symbol/No data on Symbol")
                 return
             }
@@ -245,6 +246,7 @@ class YahooFinanceScraper {
                 print("couldn't find right range when parsing for name of company")
                 error = true
             }
+            
             if !error {
                 rangeOfTheData = leftSideRange!.upperBound..<rightSideRange!.lowerBound
                 name = String(htmlString[rangeOfTheData])
@@ -291,7 +293,7 @@ class YahooFinanceScraper {
                 }
             }
             
-            htmlString = self.shorten_stat_htmlString(htmlString: htmlString)
+            htmlString = self.shorten_stat_htmlString(htmlString: &htmlString)
             
             // parse for last split date
             error = false
