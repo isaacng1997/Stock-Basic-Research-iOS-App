@@ -31,9 +31,8 @@ let invalid_symbol_string = "<title>Symbol Lookup from Yahoo Finance</title>"
 var company_dictionary:[String: [String:String]] = [:]
 var ready:[String:Bool] = [:]
 
-var price = ""
-
 class YahooFinanceScraper {
+    var price = "-1"
     
     static func get(symbol: String) -> [String: String] {
         get_detail_info(symbol: symbol)
@@ -43,32 +42,41 @@ class YahooFinanceScraper {
         return company_dictionary[symbol]!
     }
     
-    static func get_newest_price(symbol:String) -> String {
-        price = ""
-        scrap_newst_price(symbol: symbol)
-        while(price == ""){
-            //sleep(1)
-        }
-        return price
-    }
+//    func get_newest_price(symbol:String) -> String {
+//        price = "-1"
+//
+////        while(price == ""){
+////            //sleep(1)
+////        }
+//        let group = DispatchGroup()
+//        group.enter()
+//
+//        DispatchQueue.global(qos: .userInitiated).async {
+//            self.scrap_newst_price(symbol: symbol, group: group)
+//        }
+//
+//        // wait ...
+//        group.wait()
+//        return price
+//    }
     
-    static func scrap_newst_price(symbol:String) {
+    func get_newest_price(symbol:String) -> String {
         let url = URL(string: baseURL + symbol + statURL + symbol)!
+        let semaphore = DispatchSemaphore(value: 0)
+        var result = "-1"
+        
         let task = URLSession.shared.dataTask(with: url) { (data, response, error) in
             guard let data = data else {
                 print("data was nil")
-                price = "-1"
                 return
             }
             guard let htmlString = String(data: data, encoding: .utf8) else {
                 print("couldn't cast data into String")
-                price = "-1"
                 return
             }
             
             if htmlString.contains(invalid_symbol_string) {
                 print("Invalid Symbol/No data on Symbol")
-                price = "-1"
                 return
             }
             
@@ -78,37 +86,34 @@ class YahooFinanceScraper {
             var rightString = """
             "},"regularMarketVolume":{"raw":
             """
-            let leftSideRange = htmlString.range(of: leftString)
-            var rightSideRange = htmlString.range(of: rightString)
             var lastPrice = ""
-            if leftSideRange == nil {
+            guard let leftSideRange = htmlString.range(of: leftString) else {
                 print("couldn't find left range when parsing for last price")
-                price = "-1"
                 return
             }
-            if rightSideRange == nil {
+            guard let rightSideRange = htmlString.range(of: rightString) else {
                 print("couldn't find right range when parsing for last price")
-                price = "-1"
                 return
             }
-            
-            var rangeOfTheData = leftSideRange!.upperBound..<rightSideRange!.lowerBound
+            var rangeOfTheData = leftSideRange.upperBound..<rightSideRange.lowerBound
             lastPrice = String(htmlString[rangeOfTheData])
             
             rightString = """
             ,"fmt":"
             """
-            rightSideRange = lastPrice.range(of: rightString)
-            if rightSideRange == nil {
+            
+            guard let rightSideRange2 = lastPrice.range(of: rightString) else {
                 print("couldn't find right range when parsing for last price")
-                price = "-1"
                 return
             }
             
-            rangeOfTheData = lastPrice.startIndex..<rightSideRange!.lowerBound
-            price = String(lastPrice[rangeOfTheData])
+            rangeOfTheData = lastPrice.startIndex..<rightSideRange2.lowerBound
+            result = String(lastPrice[rangeOfTheData])
+            semaphore.signal()
         }
         task.resume()
+        semaphore.wait()
+        return result
     }
     
     static func shorten_stat_htmlString(htmlString: String) -> String {
@@ -361,6 +366,7 @@ class YahooFinanceScraper {
                 name = String(htmlString[rangeOfTheData])
             }
             name = name.replacingOccurrences(of: "&amp;", with: "&")
+            name = name.replacingOccurrences(of: "&#x27;", with: "'")
             
             
             // parse for last price

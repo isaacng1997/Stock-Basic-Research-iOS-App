@@ -51,7 +51,7 @@ class StockDataRetriever {
                 stock.setValuesForKeys(c)
                 stock.setValue(Date(), forKey: "lastUpdate")
             } else {
-                stock.setValue(YahooFinanceScraper.get_newest_price(symbol: symbol), forKey: "lastPrice")
+                stock.setValue(YahooFinanceScraper().get_newest_price(symbol: symbol), forKey: "lastPrice")
             }
             
         } catch {
@@ -68,6 +68,6 @@ class StockDataRetriever {
     }
     
     static func get_newest_price(symbol: String) -> String {
-        return YahooFinanceScraper.get_newest_price(symbol: symbol)
+        return YahooFinanceScraper().get_newest_price(symbol: symbol)
     }
 }

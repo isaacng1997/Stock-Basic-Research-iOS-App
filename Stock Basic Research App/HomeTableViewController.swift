@@ -16,6 +16,8 @@ class HomeTableViewController: UITableViewController {
     let favoriteEntity = "Favorite"
     let appDelegate = UIApplication.shared.delegate as! AppDelegate
     
+    var updating = false        // prevent spamming the update button
+    
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -73,11 +75,29 @@ class HomeTableViewController: UITableViewController {
     }
     
     @IBAction func refreshButton(_ sender: Any) {
-        for i in 0..<favoriteStockSymbolList.count {
-            let lastPrice = StockDataRetriever.get_newest_price(symbol: favoriteStockSymbolList[i].value(forKey: "symbol") as! String)
-            favoriteStockSymbolList[i].setValue(lastPrice, forKey: "lastPrice")
+        if(updating) {
+            return
         }
-        tableView.reloadData()
+        updating = true
+        let context = appDelegate.persistentContainer.viewContext
+        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: favoriteEntity)
+        
+        DispatchQueue.global(qos: .background).async { [weak self] in
+            do {
+                let results = try context.fetch(fetchRequest)
+                for i in 0 ..< results.count {
+                    let favStock = results[i] as! NSManagedObject
+                    let lastPrice = StockDataRetriever.get_newest_price(symbol: favStock.value(forKey: "symbol") as! String)
+                    favStock.setValue(lastPrice, forKey: "lastPrice")
+                }
+            } catch {
+                fatalError("Error in HomeTableViewController: Failed fetch while refreshing.")
+            }
+            DispatchQueue.main.async {
+                self?.tableView.reloadData()
+                self?.updating = false
+            }
+        }
     }
     
     /*
