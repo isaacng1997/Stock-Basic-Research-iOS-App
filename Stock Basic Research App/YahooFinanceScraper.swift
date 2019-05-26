@@ -24,6 +24,7 @@ let today = Date()
 let five_years_in_sec = TimeInterval(1825 * 86400)
 let one_year_in_sec = TimeInterval(365 * 86400)
 let three_months_in_sec = TimeInterval(93 * 86400)
+let one_months_in_sec = TimeInterval(31 * 86400)
 let one_week_in_sec = TimeInterval(7 * 86400)
 
 let invalid_symbol_string = "<title>Symbol Lookup from Yahoo Finance</title>"
@@ -122,11 +123,11 @@ class YahooFinanceScraper {
         return String(htmlString[rangeOfTheData])
     }
     
-    private func replace_sumbols(string: String) -> String {
+    private func replace_symbols(string: String) -> String {
         var result = string.replacingOccurrences(of: "&amp;", with: "&")
         result = result.replacingOccurrences(of: "&#x27;", with: "'")
         
-        return string
+        return result
     }
     
     
@@ -145,9 +146,10 @@ class YahooFinanceScraper {
     }
     
     // Presets: "5y1m": 5 years in 1 month interval
-    //                    "1y1w": 1 year in 1 week interval
-    //                    "3m1d": 3 months in 1 day interval
-    //                    "1w1d": 1 week in 1 day interval
+    //          "1y1w": 1 year in 1 week interval
+    //          "3m1d": 3 months in 1 day interval
+    //          "1m1d": 1 months in 1 day interval
+    //          "1w1d": 1 week in 1 day interval
     func historical_url(symbol: String,
                         preset: String) -> String {
         var start = 0
@@ -163,6 +165,9 @@ class YahooFinanceScraper {
             interval = "1wk"
         case "3m1d":
             start = Int((today - three_months_in_sec).timeIntervalSince1970)
+            interval = "1d"
+        case "1m1d":
+            start = Int((today - one_months_in_sec).timeIntervalSince1970)
             interval = "1d"
         case "1k1d":
             start = Int((today - one_week_in_sec).timeIntervalSince1970)
@@ -250,7 +255,7 @@ class YahooFinanceScraper {
             if !error {
                 rangeOfTheData = leftSideRange!.upperBound..<rightSideRange!.lowerBound
                 name = String(htmlString[rangeOfTheData])
-                name = self.replace_sumbols(string: name)
+                name = self.replace_symbols(string: name)
             }
             
             

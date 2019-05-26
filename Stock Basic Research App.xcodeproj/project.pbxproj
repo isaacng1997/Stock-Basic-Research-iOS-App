@@ -18,6 +18,9 @@
 		6A92D4CD2293620900646376 /* SearchTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A92D4CC2293620900646376 /* SearchTableViewController.swift */; };
 		6A92D4CF2293A31200646376 /* SearchTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A92D4CE2293A31200646376 /* SearchTableViewCell.swift */; };
 		6A92D4D12296238300646376 /* HomeTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A92D4D02296238300646376 /* HomeTableViewCell.swift */; };
+		6AF2FCFD229856B70066E2D8 /* StockDataRetriever.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AF2FCFC229856B70066E2D8 /* StockDataRetriever.swift */; };
+		6AF2FCFF22988E430066E2D8 /* YahooFinanceScraper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AF2FCFE22988E430066E2D8 /* YahooFinanceScraper.swift */; };
+		6AF2FD042298D9980066E2D8 /* Model.xcmappingmodel in Sources */ = {isa = PBXBuildFile; fileRef = 6AF2FD032298D9980066E2D8 /* Model.xcmappingmodel */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -34,6 +37,10 @@
 		6A92D4CC2293620900646376 /* SearchTableViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchTableViewController.swift; sourceTree = "<group>"; };
 		6A92D4CE2293A31200646376 /* SearchTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchTableViewCell.swift; sourceTree = "<group>"; };
 		6A92D4D02296238300646376 /* HomeTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeTableViewCell.swift; sourceTree = "<group>"; };
+		6AF2FCFC229856B70066E2D8 /* StockDataRetriever.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StockDataRetriever.swift; sourceTree = "<group>"; };
+		6AF2FCFE22988E430066E2D8 /* YahooFinanceScraper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YahooFinanceScraper.swift; sourceTree = "<group>"; };
+		6AF2FD022298D9260066E2D8 /* Stock_Basic_Research_App 2.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = "Stock_Basic_Research_App 2.xcdatamodel"; sourceTree = "<group>"; };
+		6AF2FD032298D9980066E2D8 /* Model.xcmappingmodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcmappingmodel; path = Model.xcmappingmodel; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -50,6 +57,7 @@
 		6A92D4A12292603E00646376 = {
 			isa = PBXGroup;
 			children = (
+				6AF2FD032298D9980066E2D8 /* Model.xcmappingmodel */,
 				6A92D4AC2292603E00646376 /* Stock Basic Research App */,
 				6A92D4AB2292603E00646376 /* Products */,
 			);
@@ -78,6 +86,8 @@
 				6A92D4CC2293620900646376 /* SearchTableViewController.swift */,
 				6A92D4CE2293A31200646376 /* SearchTableViewCell.swift */,
 				6A92D4D02296238300646376 /* HomeTableViewCell.swift */,
+				6AF2FCFC229856B70066E2D8 /* StockDataRetriever.swift */,
+				6AF2FCFE22988E430066E2D8 /* YahooFinanceScraper.swift */,
 			);
 			path = "Stock Basic Research App";
 			sourceTree = "<group>";
@@ -155,11 +165,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				6A92D4C722927E0800646376 /* HomeTableViewController.swift in Sources */,
+				6AF2FCFD229856B70066E2D8 /* StockDataRetriever.swift in Sources */,
 				6A92D4B62292603F00646376 /* Stock_Basic_Research_App.xcdatamodeld in Sources */,
+				6AF2FD042298D9980066E2D8 /* Model.xcmappingmodel in Sources */,
 				6A92D4D12296238300646376 /* HomeTableViewCell.swift in Sources */,
 				6A92D4CD2293620900646376 /* SearchTableViewController.swift in Sources */,
 				6A92D4CF2293A31200646376 /* SearchTableViewCell.swift in Sources */,
 				6A92D4AE2292603E00646376 /* AppDelegate.swift in Sources */,
+				6AF2FCFF22988E430066E2D8 /* YahooFinanceScraper.swift in Sources */,
 				6A92D4C32292623E00646376 /* StockViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -307,6 +320,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = GEEG35G9R9;
 				INFOPLIST_FILE = "Stock Basic Research App/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -315,7 +329,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "isaacngkh.Stock-Basic-Research-App";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -324,6 +338,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = GEEG35G9R9;
 				INFOPLIST_FILE = "Stock Basic Research App/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -332,7 +347,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "isaacngkh.Stock-Basic-Research-App";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
@@ -363,9 +378,10 @@
 		6A92D4B42292603F00646376 /* Stock_Basic_Research_App.xcdatamodeld */ = {
 			isa = XCVersionGroup;
 			children = (
+				6AF2FD022298D9260066E2D8 /* Stock_Basic_Research_App 2.xcdatamodel */,
 				6A92D4B52292603F00646376 /* Stock_Basic_Research_App.xcdatamodel */,
 			);
-			currentVersion = 6A92D4B52292603F00646376 /* Stock_Basic_Research_App.xcdatamodel */;
+			currentVersion = 6AF2FD022298D9260066E2D8 /* Stock_Basic_Research_App 2.xcdatamodel */;
 			path = Stock_Basic_Research_App.xcdatamodeld;
 			sourceTree = "<group>";
 			versionGroupType = wrapper.xcdatamodel;

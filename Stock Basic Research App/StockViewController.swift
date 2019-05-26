@@ -28,6 +28,8 @@ class StockViewController: UIViewController {
     @IBOutlet weak var nameLabel: UILabel!
     @IBOutlet weak var priceLabel: UILabel!
     
+    // 1 = 1d; 2 = 1w; 3 = 1m; 4 = 3m 5 = 1y; 6 = 5y
+    var graphRange = 1
     
     var stockInfo:NSManagedObject = NSManagedObject()
     
@@ -117,6 +119,30 @@ class StockViewController: UIViewController {
         } catch let error as NSError {
             fatalError("Could not save. \(error), \(error.userInfo)")
         }
+    }
+    
+    @IBAction func oneDayButtonPressed(_ sender: Any) {
+        self.graphRange = 1
+    }
+    
+    @IBAction func oneWeekButtonPressed(_ sender: Any) {
+        self.graphRange = 2
+    }
+    
+    @IBAction func oneMonthButtonPressed(_ sender: Any) {
+        self.graphRange = 3
+    }
+    
+    @IBAction func threeMonthButtonPressed(_ sender: Any) {
+        self.graphRange = 4
+    }
+    
+    @IBAction func oneYearButtonPressed(_ sender: Any) {
+        self.graphRange = 5
+    }
+    
+    @IBAction func fiveYearButtonPressed(_ sender: Any) {
+        self.graphRange = 6
     }
     
     
