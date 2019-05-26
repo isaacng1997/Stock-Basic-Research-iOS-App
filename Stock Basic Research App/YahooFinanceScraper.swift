@@ -28,37 +28,21 @@ let one_week_in_sec = TimeInterval(7 * 86400)
 
 let invalid_symbol_string = "<title>Symbol Lookup from Yahoo Finance</title>"
 
-var company_dictionary:[String: [String:String]] = [:]
-var ready:[String:Bool] = [:]
-
 class YahooFinanceScraper {
-    var price = "-1"
+    private var get_all_info_result:[String:String] = [:]
     
-    static func get(symbol: String) -> [String: String] {
-        get_detail_info(symbol: symbol)
-        while(ready[symbol]! == false) {
-            sleep(1)
-        }
-        return company_dictionary[symbol]!
+    func get_all_info(symbol: String) -> [String: String] {
+        get_all_info_result = [:]
+        let semaphore = DispatchSemaphore(value: 0)
+        print("in get all info")
+        
+        get_info_from_stat(symbol: symbol, semaphore: semaphore)
+        semaphore.wait()
+        get_info_from_profile(symbol: symbol, semaphore: semaphore)
+        semaphore.wait()
+        return get_all_info_result
+        
     }
-    
-//    func get_newest_price(symbol:String) -> String {
-//        price = "-1"
-//
-////        while(price == ""){
-////            //sleep(1)
-////        }
-//        let group = DispatchGroup()
-//        group.enter()
-//
-//        DispatchQueue.global(qos: .userInitiated).async {
-//            self.scrap_newst_price(symbol: symbol, group: group)
-//        }
-//
-//        // wait ...
-//        group.wait()
-//        return price
-//    }
     
     func get_newest_price(symbol:String) -> String {
         let url = URL(string: baseURL + symbol + statURL + symbol)!
@@ -80,13 +64,14 @@ class YahooFinanceScraper {
                 return
             }
             
+            var lastPrice = ""
+            
             let leftString = """
             "currency":"USD","regularMarketPrice":{"raw":
             """
             var rightString = """
             "},"regularMarketVolume":{"raw":
             """
-            var lastPrice = ""
             guard let leftSideRange = htmlString.range(of: leftString) else {
                 print("couldn't find left range when parsing for last price")
                 return
@@ -98,17 +83,18 @@ class YahooFinanceScraper {
             var rangeOfTheData = leftSideRange.upperBound..<rightSideRange.lowerBound
             lastPrice = String(htmlString[rangeOfTheData])
             
+            
             rightString = """
             ,"fmt":"
             """
-            
             guard let rightSideRange2 = lastPrice.range(of: rightString) else {
                 print("couldn't find right range when parsing for last price")
                 return
             }
-            
             rangeOfTheData = lastPrice.startIndex..<rightSideRange2.lowerBound
             result = String(lastPrice[rangeOfTheData])
+            
+            
             semaphore.signal()
         }
         task.resume()
@@ -116,7 +102,7 @@ class YahooFinanceScraper {
         return result
     }
     
-    static func shorten_stat_htmlString(htmlString: String) -> String {
+    private func shorten_stat_htmlString(htmlString: String) -> String {
         let leftString = """
         <td class="Fz(s) Fw(500) Ta(end)" data-reactid="19">
         """
@@ -125,15 +111,22 @@ class YahooFinanceScraper {
         """
         
         guard let leftSideRange = htmlString.range(of: leftString) else {
-            print("couldn't find left range when parsing for name of company")
+            print("couldn't find left range when shortening htmlString")
             return htmlString
         }
         guard let rightSideRange = htmlString.range(of: rightString) else {
-            print("couldn't find right range when parsing for name of company")
+            print("couldn't find right range when shortening htmlString")
             return htmlString
         }
         let rangeOfTheData = leftSideRange.lowerBound ..< rightSideRange.upperBound
         return String(htmlString[rangeOfTheData])
+    }
+    
+    private func replace_sumbols(string: String) -> String {
+        var result = string.replacingOccurrences(of: "&amp;", with: "&")
+        result = result.replacingOccurrences(of: "&#x27;", with: "'")
+        
+        return string
     }
     
     
@@ -185,7 +178,7 @@ class YahooFinanceScraper {
                               interval: interval)
     }
     
-    static func scrap_from_statistics(htmlString: inout String,
+    private func scrap_from_statistics(htmlString: inout String,
                                       left: Int,
                                       name_of_stat: String,
                                       end_of_table: Bool = false,
@@ -220,18 +213,197 @@ class YahooFinanceScraper {
         return String(htmlString[rangeOfTheData])
     }
     
+    func get_info_from_stat(symbol: String, semaphore: DispatchSemaphore) {
+        let url = URL(string: baseURL + symbol + statURL + symbol)!
+        let task = URLSession.shared.dataTask(with: url) { (data, response, error) in
+            guard let data = data else {
+                print("data was nil")
+                return
+            }
+            guard var htmlString = String(data: data, encoding: .utf8) else {
+                print("couldn't cast data into String")
+                return
+            }
+            
+            if htmlString.contains(invalid_symbol_string) {
+                print("Invalid Symbol/No data on Symbol")
+                return
+            }
+            
+            // parse for name of company
+            var error = false
+            var leftString = "Key Statistics | "
+            var rightString = " Stock - Yahoo Finance"
+            var leftSideRange = htmlString.range(of: leftString)
+            var rightSideRange = htmlString.range(of: rightString)
+            var rangeOfTheData = htmlString.startIndex ..< htmlString.startIndex
+            var name = ""
+            if leftSideRange == nil {
+                print("couldn't find left range when parsing for name of company")
+                error = true
+            }
+            if rightSideRange == nil {
+                print("couldn't find right range when parsing for name of company")
+                error = true
+            }
+            if !error {
+                rangeOfTheData = leftSideRange!.upperBound..<rightSideRange!.lowerBound
+                name = String(htmlString[rangeOfTheData])
+                name = self.replace_sumbols(string: name)
+            }
+            
+            
+            // parse for last price
+            error = false
+            leftString = """
+            "currency":"USD","regularMarketPrice":{"raw":
+            """
+            rightString = """
+            "},"regularMarketVolume":{"raw":
+            """
+            leftSideRange = htmlString.range(of: leftString)
+            rightSideRange = htmlString.range(of: rightString)
+            var lastPrice = ""
+            if leftSideRange == nil {
+                print("couldn't find left range when parsing for last price")
+                error = true
+            }
+            if rightSideRange == nil {
+                print("couldn't find right range when parsing for last price")
+                error = true
+            }
+            if !error {
+                rangeOfTheData = leftSideRange!.upperBound..<rightSideRange!.lowerBound
+                lastPrice = String(htmlString[rangeOfTheData])
+                
+                error = false
+                rightString = """
+                ,"fmt":"
+                """
+                rightSideRange = lastPrice.range(of: rightString)
+                if rightSideRange == nil {
+                    print("couldn't find right range when parsing for last price")
+                    error = true
+                }
+                
+                if !error {
+                    rangeOfTheData = lastPrice.startIndex..<rightSideRange!.lowerBound
+                    lastPrice = String(lastPrice[rangeOfTheData])
+                }
+            }
+            
+            htmlString = self.shorten_stat_htmlString(htmlString: htmlString)
+            
+            // parse for last split date
+            error = false
+            leftString = """
+            <td class="Fz(s) Fw(500) Ta(end)" data-reactid="483">
+            """
+            rightString = """
+            </td></tr></tbody></table></div></div></div><div class="Cl(b)" data-reactid="484">
+            """
+            leftSideRange = htmlString.range(of: leftString)
+            rightSideRange = htmlString.range(of: rightString)
+            var lastSplitDate = ""
+            if leftSideRange == nil {
+                print("couldn't find left range when parsing for last split date")
+                error = true
+            }
+            if rightSideRange == nil {
+                print("couldn't find right range when parsing for last split date")
+                error = true
+            }
+            if !error {
+                rangeOfTheData = leftSideRange!.upperBound..<rightSideRange!.lowerBound
+                lastSplitDate = String(htmlString[rangeOfTheData])
+            }
+            
+            self.get_all_info_result["symbol"] =                    symbol
+            self.get_all_info_result["name"] =                      name
+            self.get_all_info_result["marketCap"] =                 self.scrap_from_statistics(htmlString: &htmlString, left: 19, name_of_stat: "marketCap")
+            self.get_all_info_result["enterpriseValue"] =           self.scrap_from_statistics(htmlString: &htmlString, left: 26, name_of_stat: "enterpriseValue")
+            self.get_all_info_result["trailingPE"] =                self.scrap_from_statistics(htmlString: &htmlString, left: 33, name_of_stat: "trailingPE")
+            self.get_all_info_result["forwardPE"] =                 self.scrap_from_statistics(htmlString: &htmlString, left: 40, name_of_stat: "forwardPE")
+            self.get_all_info_result["pegRatio"] =                  self.scrap_from_statistics(htmlString: &htmlString, left: 47, name_of_stat: "pegRatio")
+            self.get_all_info_result["priceSale"] =                 self.scrap_from_statistics(htmlString: &htmlString, left: 54, name_of_stat: "priceSale")
+            self.get_all_info_result["priceBook"] =                 self.scrap_from_statistics(htmlString: &htmlString, left: 61, name_of_stat: "priceBook")
+            self.get_all_info_result["enterpriseValueRevenue"] =    self.scrap_from_statistics(htmlString: &htmlString, left: 68, name_of_stat: "enterpriseValueRevenue")
+            self.get_all_info_result["enterpriseValueEBITDA"] =     self.scrap_from_statistics(htmlString: &htmlString, left: 75, name_of_stat: "enterpriseValueEBITDA", end_of_div: true)
+            
+            self.get_all_info_result["profitMargin"] =      self.scrap_from_statistics(htmlString: &htmlString, left: 112, name_of_stat: "profitMargin")
+            self.get_all_info_result["operativeMargin"] =   self.scrap_from_statistics(htmlString: &htmlString, left: 119, name_of_stat: "operativeMargin", end_of_table: true)
+            
+            self.get_all_info_result["returnOnAssets"] = self.scrap_from_statistics(htmlString: &htmlString, left: 131, name_of_stat: "returnOnAssets")
+            self.get_all_info_result["returnOnEquity"] = self.scrap_from_statistics(htmlString: &htmlString, left: 138, name_of_stat: "returnOnEquity", end_of_table: true)
+            
+            self.get_all_info_result["revenue"] =                   self.scrap_from_statistics(htmlString: &htmlString, left: 150, name_of_stat: "revenue")
+            self.get_all_info_result["revenuePerShare"] =           self.scrap_from_statistics(htmlString: &htmlString, left: 157, name_of_stat: "revenuePerShare")
+            self.get_all_info_result["quarterlyRevenueGrowth"] =    self.scrap_from_statistics(htmlString: &htmlString, left: 164, name_of_stat: "quarterlyRevenueGrowth")
+            self.get_all_info_result["grossProfit"] =               self.scrap_from_statistics(htmlString: &htmlString, left: 171, name_of_stat: "grossProfit")
+            self.get_all_info_result["ebitda"] =                    self.scrap_from_statistics(htmlString: &htmlString, left: 178, name_of_stat: "ebitda")
+            self.get_all_info_result["netIncomeAviToCommon"] =      self.scrap_from_statistics(htmlString: &htmlString, left: 185, name_of_stat: "netIncomeAviToCommon")
+            self.get_all_info_result["dilutedEps"] =                self.scrap_from_statistics(htmlString: &htmlString, left: 192, name_of_stat: "dilutedEps")
+            self.get_all_info_result["quarterlyEarningGrowth"] =    self.scrap_from_statistics(htmlString: &htmlString, left: 199, name_of_stat: "quarterlyEarningGrowth", end_of_table: true)
+            
+            self.get_all_info_result["totalCash"] =         self.scrap_from_statistics(htmlString: &htmlString, left: 211, name_of_stat: "totalCash")
+            self.get_all_info_result["totalCashPerShare"] = self.scrap_from_statistics(htmlString: &htmlString, left: 218, name_of_stat: "totalCashPerShare")
+            self.get_all_info_result["totalDebt"] =         self.scrap_from_statistics(htmlString: &htmlString, left: 225, name_of_stat: "totalDebt")
+            self.get_all_info_result["totalDebtEquity"] =   self.scrap_from_statistics(htmlString: &htmlString, left: 232, name_of_stat: "totalDebtEquity")
+            self.get_all_info_result["currentRatio"] =      self.scrap_from_statistics(htmlString: &htmlString, left: 239, name_of_stat: "currentRatio")
+            self.get_all_info_result["bookValuePerShare"] = self.scrap_from_statistics(htmlString: &htmlString, left: 246, name_of_stat: "bookValuePerShare", end_of_table: true)
+            
+            self.get_all_info_result["operatingCashFlow"] =     self.scrap_from_statistics(htmlString: &htmlString, left: 258, name_of_stat: "operatingCashFlow")
+            self.get_all_info_result["leveredFreeCashFlow"] =   self.scrap_from_statistics(htmlString: &htmlString, left: 265, name_of_stat: "operatingCashFlow", end_of_div: true)
+            
+            self.get_all_info_result["beta"] =                          self.scrap_from_statistics(htmlString: &htmlString, left: 284, name_of_stat: "beta")
+            self.get_all_info_result["fiftyTwoWeekChange"] =            self.scrap_from_statistics(htmlString: &htmlString, left: 291, name_of_stat: "fiftyTwoWeekChange")
+            self.get_all_info_result["sp500FiftyTwoWeekChange"] =       self.scrap_from_statistics(htmlString: &htmlString, left: 298, name_of_stat: "sp500FiftyTwoWeekChange")
+            self.get_all_info_result["fiftyTwoWeekHigh"] =              self.scrap_from_statistics(htmlString: &htmlString, left: 305, name_of_stat: "fiftyTwoWeekHigh")
+            self.get_all_info_result["fiftyTwoWeekLow"] =               self.scrap_from_statistics(htmlString: &htmlString, left: 312, name_of_stat: "fiftyTwoWeekLow")
+            self.get_all_info_result["fiftyDayMovingAverage"] =         self.scrap_from_statistics(htmlString: &htmlString, left: 319, name_of_stat: "fiftyDayMovingAverage")
+            self.get_all_info_result["twoHundredDayMovingAverage"] =    self.scrap_from_statistics(htmlString: &htmlString, left: 326, name_of_stat: "twoHundredDayMovingAverage", end_of_table: true)
+            
+            self.get_all_info_result["avgVolthreeMonth"] =                  self.scrap_from_statistics(htmlString: &htmlString, left: 338, name_of_stat: "avgVolthreeMonth")
+            self.get_all_info_result["avgBoltenDay"] =                      self.scrap_from_statistics(htmlString: &htmlString, left: 345, name_of_stat: "avgBoltenDay")
+            self.get_all_info_result["sharesOutstanding"] =                 self.scrap_from_statistics(htmlString: &htmlString, left: 352, name_of_stat: "sharesOutstanding")
+            self.get_all_info_result["float"] =                             self.scrap_from_statistics(htmlString: &htmlString, left: 359, name_of_stat: "float")
+            self.get_all_info_result["percentHeldByInsiders"] =             self.scrap_from_statistics(htmlString: &htmlString, left: 366, name_of_stat: "percentHeldByInsiders")
+            self.get_all_info_result["percentHeldByInstitutions"] =         self.scrap_from_statistics(htmlString: &htmlString, left: 373, name_of_stat: "percentHeldByInstitutions")
+            self.get_all_info_result["sharesShort"] =                       self.scrap_from_statistics(htmlString: &htmlString, left: 380, name_of_stat: "sharesShort")
+            self.get_all_info_result["shortRatio"] =                        self.scrap_from_statistics(htmlString: &htmlString, left: 387, name_of_stat: "shortRatio")
+            self.get_all_info_result["shortPercentOfFloat"] =               self.scrap_from_statistics(htmlString: &htmlString, left: 394, name_of_stat: "shortPercentOfFloat")
+            self.get_all_info_result["shortPercentOfSharesOutstanding"] =   self.scrap_from_statistics(htmlString: &htmlString, left: 401, name_of_stat: "shortPercentOfSharesOutstanding")
+            self.get_all_info_result["sharesShortPriorMonth"] =             self.scrap_from_statistics(htmlString: &htmlString, left: 408, name_of_stat: "sharesShortPriorMonth", end_of_table: true)
+            
+            self.get_all_info_result["forwardAnnualDividendRate"] =     self.scrap_from_statistics(htmlString: &htmlString, left: 420, name_of_stat: "forwardAnnualDividendRate")
+            self.get_all_info_result["forwardAnnualDividendYield"] =    self.scrap_from_statistics(htmlString: &htmlString, left: 427, name_of_stat: "forwardAnnualDividendYield")
+            self.get_all_info_result["trailingAnnualDividendRate"] =    self.scrap_from_statistics(htmlString: &htmlString, left: 434, name_of_stat: "trailingAnnualDividendRate")
+            self.get_all_info_result["trailingAnnualDividendYield"] =   self.scrap_from_statistics(htmlString: &htmlString, left: 441, name_of_stat: "trailingAnnualDividendYield")
+            self.get_all_info_result["fiveYearAverageDividentYield"] =  self.scrap_from_statistics(htmlString: &htmlString, left: 448, name_of_stat: "fiveYearAverageDividentYield")
+            self.get_all_info_result["payoutRatio"] =                   self.scrap_from_statistics(htmlString: &htmlString, left: 455, name_of_stat: "payoutRatio")
+            self.get_all_info_result["dividendDate"] =                  self.scrap_from_statistics(htmlString: &htmlString, left: 462, name_of_stat: "dividendDate")
+            self.get_all_info_result["exDividendDate"] =                self.scrap_from_statistics(htmlString: &htmlString, left: 469, name_of_stat: "exDividendDate")
+            self.get_all_info_result["lastSplitFactor"] =               self.scrap_from_statistics(htmlString: &htmlString, left: 476, name_of_stat: "lastSplitFactor")
+            self.get_all_info_result["lastSplitDate"] =                 lastSplitDate
+            
+            self.get_all_info_result["lastPrice"] =  lastPrice
+            
+            semaphore.signal()
+        }
+        
+        task.resume()
+    }
     
-    private static func get_profile_info(symbol: String) {
+    
+    private func get_info_from_profile(symbol: String, semaphore: DispatchSemaphore) {
         let url = URL(string: baseURL + symbol + profileURL + symbol)!
         let task = URLSession.shared.dataTask(with: url) { (data, response, error) in
             guard let data = data else {
                 print("data was nil")
-                ready[symbol] = true
                 return
             }
             guard let htmlString = String(data: data, encoding: .utf8) else {
                 print("couldn't cast data into String")
-                ready[symbol] = true
                 return
             }
             
@@ -311,203 +483,13 @@ class YahooFinanceScraper {
                 fullTimeEmployees = String(htmlString[rangeOfTheData])
             }
             
-            
-            company_dictionary[symbol]!["sector"] = sector
-            company_dictionary[symbol]!["industry"] = industry
-            company_dictionary[symbol]!["fullTimeEmployees"] = fullTimeEmployees
-            
-            ready[symbol] = true
+            self.get_all_info_result["sector"] = sector
+            self.get_all_info_result["industry"] = industry
+            self.get_all_info_result["fullTimeEmployees"] = fullTimeEmployees
+            semaphore.signal()
         }
         
         task.resume()
         
-    }
-    
-    
-    static func get_detail_info(symbol: String) {
-        ready[symbol] = false
-        let url = URL(string: baseURL + symbol + statURL + symbol)!
-        let task = URLSession.shared.dataTask(with: url) { (data, response, error) in
-            guard let data = data else {
-                print("data was nil")
-                ready[symbol] = true
-                return
-            }
-            guard var htmlString = String(data: data, encoding: .utf8) else {
-                print("couldn't cast data into String")
-                ready[symbol] = true
-                return
-            }
-            
-            if htmlString.contains(invalid_symbol_string) {
-                print("Invalid Symbol/No data on Symbol")
-                ready[symbol] = true
-                return
-            }
-            
-            // parse for name of company
-            var error = false
-            var leftString = "Key Statistics | "
-            var rightString = " Stock - Yahoo Finance"
-            var leftSideRange = htmlString.range(of: leftString)
-            var rightSideRange = htmlString.range(of: rightString)
-            var rangeOfTheData = htmlString.startIndex ..< htmlString.startIndex
-            var name = ""
-            if leftSideRange == nil {
-                print("couldn't find left range when parsing for name of company")
-                error = true
-            }
-            if rightSideRange == nil {
-                print("couldn't find right range when parsing for name of company")
-                error = true
-            }
-            if !error {
-                rangeOfTheData = leftSideRange!.upperBound..<rightSideRange!.lowerBound
-                name = String(htmlString[rangeOfTheData])
-            }
-            name = name.replacingOccurrences(of: "&amp;", with: "&")
-            name = name.replacingOccurrences(of: "&#x27;", with: "'")
-            
-            
-            // parse for last price
-            error = false
-            leftString = """
-            "currency":"USD","regularMarketPrice":{"raw":
-            """
-            rightString = """
-            "},"regularMarketVolume":{"raw":
-            """
-            leftSideRange = htmlString.range(of: leftString)
-            rightSideRange = htmlString.range(of: rightString)
-            var lastPrice = ""
-            if leftSideRange == nil {
-                print("couldn't find left range when parsing for last price")
-                error = true
-            }
-            if rightSideRange == nil {
-                print("couldn't find right range when parsing for last price")
-                error = true
-            }
-            if !error {
-                rangeOfTheData = leftSideRange!.upperBound..<rightSideRange!.lowerBound
-                lastPrice = String(htmlString[rangeOfTheData])
-                
-                error = false
-                rightString = """
-                ,"fmt":"
-                """
-                rightSideRange = lastPrice.range(of: rightString)
-                if rightSideRange == nil {
-                    print("couldn't find right range when parsing for last price")
-                    error = true
-                }
-                
-                if !error {
-                    rangeOfTheData = lastPrice.startIndex..<rightSideRange!.lowerBound
-                    lastPrice = String(lastPrice[rangeOfTheData])
-                }
-            }
-            
-            htmlString = shorten_stat_htmlString(htmlString: htmlString)
-            
-            // parse for last split date
-            error = false
-            leftString = """
-            <td class="Fz(s) Fw(500) Ta(end)" data-reactid="483">
-            """
-            rightString = """
-            </td></tr></tbody></table></div></div></div><div class="Cl(b)" data-reactid="484">
-            """
-            leftSideRange = htmlString.range(of: leftString)
-            rightSideRange = htmlString.range(of: rightString)
-            var lastSplitDate = ""
-            if leftSideRange == nil {
-                print("couldn't find left range when parsing for last split date")
-                error = true
-            }
-            if rightSideRange == nil {
-                print("couldn't find right range when parsing for last split date")
-                error = true
-            }
-            if !error {
-                rangeOfTheData = leftSideRange!.upperBound..<rightSideRange!.lowerBound
-                lastSplitDate = String(htmlString[rangeOfTheData])
-            }
-            
-            let c = ["symbol": symbol,
-                     "name":                   name,
-                     "marketCap":              self.scrap_from_statistics(htmlString: &htmlString, left: 19, name_of_stat: "marketCap"),
-                     "enterpriseValue":        self.scrap_from_statistics(htmlString: &htmlString, left: 26, name_of_stat: "enterpriseValue"),
-                     "trailingPE":             self.scrap_from_statistics(htmlString: &htmlString, left: 33, name_of_stat: "trailingPE"),
-                     "forwardPE":              self.scrap_from_statistics(htmlString: &htmlString, left: 40, name_of_stat: "forwardPE"),
-                     "pegRatio":               self.scrap_from_statistics(htmlString: &htmlString, left: 47, name_of_stat: "pegRatio"),
-                     "priceSale":              self.scrap_from_statistics(htmlString: &htmlString, left: 54, name_of_stat: "priceSale"),
-                     "priceBook":              self.scrap_from_statistics(htmlString: &htmlString, left: 61, name_of_stat: "priceBook"),
-                     "enterpriseValueRevenue": self.scrap_from_statistics(htmlString: &htmlString, left: 68, name_of_stat: "enterpriseValueRevenue"),
-                     "enterpriseValueEBITDA":  self.scrap_from_statistics(htmlString: &htmlString, left: 75, name_of_stat: "enterpriseValueEBITDA", end_of_div: true),
-                     
-                     "profitMargin":       self.scrap_from_statistics(htmlString: &htmlString, left: 112, name_of_stat: "profitMargin"),
-                     "operativeMargin":    self.scrap_from_statistics(htmlString: &htmlString, left: 119, name_of_stat: "operativeMargin", end_of_table: true),
-                     
-                     "returnOnAssets": self.scrap_from_statistics(htmlString: &htmlString, left: 131, name_of_stat: "returnOnAssets"),
-                     "returnOnEquity": self.scrap_from_statistics(htmlString: &htmlString, left: 138, name_of_stat: "returnOnEquity", end_of_table: true),
-                     
-                     "revenue":                self.scrap_from_statistics(htmlString: &htmlString, left: 150, name_of_stat: "revenue"),
-                     "revenuePerShare":        self.scrap_from_statistics(htmlString: &htmlString, left: 157, name_of_stat: "revenuePerShare"),
-                     "quarterlyRevenueGrowth": self.scrap_from_statistics(htmlString: &htmlString, left: 164, name_of_stat: "quarterlyRevenueGrowth"),
-                     "grossProfit":            self.scrap_from_statistics(htmlString: &htmlString, left: 171, name_of_stat: "grossProfit"),
-                     "ebitda":                 self.scrap_from_statistics(htmlString: &htmlString, left: 178, name_of_stat: "ebitda"),
-                     "netIncomeAviToCommon":   self.scrap_from_statistics(htmlString: &htmlString, left: 185, name_of_stat: "netIncomeAviToCommon"),
-                     "dilutedEps":             self.scrap_from_statistics(htmlString: &htmlString, left: 192, name_of_stat: "dilutedEps"),
-                     "quarterlyEarningGrowth": self.scrap_from_statistics(htmlString: &htmlString, left: 199, name_of_stat: "quarterlyEarningGrowth", end_of_table: true),
-                     
-                     "totalCash":          self.scrap_from_statistics(htmlString: &htmlString, left: 211, name_of_stat: "totalCash"),
-                     "totalCashPerShare":  self.scrap_from_statistics(htmlString: &htmlString, left: 218, name_of_stat: "totalCashPerShare"),
-                     "totalDebt":          self.scrap_from_statistics(htmlString: &htmlString, left: 225, name_of_stat: "totalDebt"),
-                     "totalDebtEquity":    self.scrap_from_statistics(htmlString: &htmlString, left: 232, name_of_stat: "totalDebtEquity"),
-                     "currentRatio":       self.scrap_from_statistics(htmlString: &htmlString, left: 239, name_of_stat: "currentRatio"),
-                     "bookValuePerShare":  self.scrap_from_statistics(htmlString: &htmlString, left: 246, name_of_stat: "bookValuePerShare", end_of_table: true),
-                     
-                     "operatingCashFlow":      self.scrap_from_statistics(htmlString: &htmlString, left: 258, name_of_stat: "operatingCashFlow"),
-                     "leveredFreeCashFlow":    self.scrap_from_statistics(htmlString: &htmlString, left: 265, name_of_stat: "operatingCashFlow", end_of_div: true),
-                     
-                     "beta":                       self.scrap_from_statistics(htmlString: &htmlString, left: 284, name_of_stat: "beta"),
-                     "fiftyTwoWeekChange":         self.scrap_from_statistics(htmlString: &htmlString, left: 291, name_of_stat: "fiftyTwoWeekChange"),
-                     "sp500FiftyTwoWeekChange":    self.scrap_from_statistics(htmlString: &htmlString, left: 298, name_of_stat: "sp500FiftyTwoWeekChange"),
-                     "fiftyTwoWeekHigh":           self.scrap_from_statistics(htmlString: &htmlString, left: 305, name_of_stat: "fiftyTwoWeekHigh"),
-                     "fiftyTwoWeekLow":            self.scrap_from_statistics(htmlString: &htmlString, left: 312, name_of_stat: "fiftyTwoWeekLow"),
-                     "fiftyDayMovingAverage":      self.scrap_from_statistics(htmlString: &htmlString, left: 319, name_of_stat: "fiftyDayMovingAverage"),
-                     "twoHundredDayMovingAverage": self.scrap_from_statistics(htmlString: &htmlString, left: 326, name_of_stat: "twoHundredDayMovingAverage", end_of_table: true),
-                     
-                     "avgVolthreeMonth":                   self.scrap_from_statistics(htmlString: &htmlString, left: 338, name_of_stat: "avgVolthreeMonth"),
-                     "avgBoltenDay":                       self.scrap_from_statistics(htmlString: &htmlString, left: 345, name_of_stat: "avgBoltenDay"),
-                     "sharesOutstanding":                  self.scrap_from_statistics(htmlString: &htmlString, left: 352, name_of_stat: "sharesOutstanding"),
-                     "float":                              self.scrap_from_statistics(htmlString: &htmlString, left: 359, name_of_stat: "float"),
-                     "percentHeldByInsiders":              self.scrap_from_statistics(htmlString: &htmlString, left: 366, name_of_stat: "percentHeldByInsiders"),
-                     "percentHeldByInstitutions":          self.scrap_from_statistics(htmlString: &htmlString, left: 373, name_of_stat: "percentHeldByInstitutions"),
-                     "sharesShort":                        self.scrap_from_statistics(htmlString: &htmlString, left: 380, name_of_stat: "sharesShort"),
-                     "shortRatio":                         self.scrap_from_statistics(htmlString: &htmlString, left: 387, name_of_stat: "shortRatio"),
-                     "shortPercentOfFloat":                self.scrap_from_statistics(htmlString: &htmlString, left: 394, name_of_stat: "shortPercentOfFloat"),
-                     "shortPercentOfSharesOutstanding":    self.scrap_from_statistics(htmlString: &htmlString, left: 401, name_of_stat: "shortPercentOfSharesOutstanding"),
-                     "sharesShortPriorMonth":              self.scrap_from_statistics(htmlString: &htmlString, left: 408, name_of_stat: "sharesShortPriorMonth", end_of_table: true),
-                     
-                     "forwardAnnualDividendRate":      self.scrap_from_statistics(htmlString: &htmlString, left: 420, name_of_stat: "forwardAnnualDividendRate"),
-                     "forwardAnnualDividendYield":     self.scrap_from_statistics(htmlString: &htmlString, left: 427, name_of_stat: "forwardAnnualDividendYield"),
-                     "trailingAnnualDividendRate":     self.scrap_from_statistics(htmlString: &htmlString, left: 434, name_of_stat: "trailingAnnualDividendRate"),
-                     "trailingAnnualDividendYield":    self.scrap_from_statistics(htmlString: &htmlString, left: 441, name_of_stat: "trailingAnnualDividendYield"),
-                     "fiveYearAverageDividentYield":   self.scrap_from_statistics(htmlString: &htmlString, left: 448, name_of_stat: "fiveYearAverageDividentYield"),
-                     "payoutRatio":                    self.scrap_from_statistics(htmlString: &htmlString, left: 455, name_of_stat: "payoutRatio"),
-                     "dividendDate":                   self.scrap_from_statistics(htmlString: &htmlString, left: 462, name_of_stat: "dividendDate"),
-                     "exDividendDate":                 self.scrap_from_statistics(htmlString: &htmlString, left: 469, name_of_stat: "exDividendDate"),
-                     "lastSplitFactor":                self.scrap_from_statistics(htmlString: &htmlString, left: 476, name_of_stat: "lastSplitFactor"),
-                     "lastSplitDate":                  lastSplitDate,
-                     
-                     "lastPrice": lastPrice]
-            
-            company_dictionary[symbol] = c
-            get_profile_info(symbol: symbol)
-        }
-        
-        task.resume()
     }
 }

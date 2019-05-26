@@ -78,6 +78,7 @@ class HomeTableViewController: UITableViewController {
         if(updating) {
             return
         }
+        
         updating = true
         let context = appDelegate.persistentContainer.viewContext
         let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: favoriteEntity)

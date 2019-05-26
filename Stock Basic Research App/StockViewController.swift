@@ -45,8 +45,13 @@ class StockViewController: UIViewController {
         } catch {
             fatalError("Error in StockViewController: Failed fetch while loading page.")
         }
-        
-        stockInfo = StockDataRetriever.get_stock_info(context: context, symbol: sym)
+        DispatchQueue.global(qos: .background).async { [weak self] in
+            let retrieved = StockDataRetriever.get_stock_info(context: context, symbol: self!.sym)
+            DispatchQueue.main.async {
+                self?.stockInfo = retrieved
+                print(self?.stockInfo)
+            }
+        }
     }
     
     @IBAction func favoriteButtonTap(_ sender: UIBarButtonItem) {

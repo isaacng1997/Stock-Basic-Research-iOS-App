@@ -43,11 +43,11 @@ class StockDataRetriever {
             let lastUpdate = stock.value(forKey: "lastUpdate")
             
             if lastUpdate == nil {
-                let c = YahooFinanceScraper.get(symbol: symbol)
+                let c = YahooFinanceScraper().get_all_info(symbol: symbol)
                 stock.setValuesForKeys(c)
                 stock.setValue(Date(), forKey: "lastUpdate")
             } else if (Int(Date().timeIntervalSince(lastUpdate as! Date)) >= timeBetweenDetailUpdates) {
-                let c = YahooFinanceScraper.get(symbol: symbol)
+                let c = YahooFinanceScraper().get_all_info(symbol: symbol)
                 stock.setValuesForKeys(c)
                 stock.setValue(Date(), forKey: "lastUpdate")
             } else {
